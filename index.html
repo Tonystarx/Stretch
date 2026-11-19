@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Stretch">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#0E1130">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Stretch Timer</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: one phone-width column, iOS large-title header, sticky bottom action, full-screen timer overlay, bottom sheets */
+  /* Single dark theme by choice: neon Vice City pinks and blues on deep navy */
+  --bg:#0E1130;
+  --surface:#181C44;
+  --soft:#232857;
+  --raised:#323872;
+  --ink:#F5F2FF;
+  --muted:#A4A8D4;
+  --line:#2D3366;
+  --accent:#FF3C78;       /* hot pink */
+  --accent-ink:#170A22;
+  --left:#00CED1;         /* Vice City teal */
+  --right:#FF3C78;        /* hot pink */
+  --single:#C04DFF;       /* magenta, for one-sided holds */
+  --prep:#FF6B35;         /* coral */
+  --danger:#FF6B6B;
+  --grad:linear-gradient(90deg,#2F5BFF 0%,#C04DFF 38%,#FF3C78 68%,#FF6B35 100%);
+  --display:"Barlow Semi Condensed","SF Pro Display",-apple-system,system-ui,sans-serif;
+  --body:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+  --r:14px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
+  -webkit-text-size-adjust:100%;overscroll-behavior-y:none;
+}
+body.locked{overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;touch-action:manipulation}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+input{font:inherit;font-size:16px;color:var(--ink)}
+svg{display:block}
+.num{font-variant-numeric:tabular-nums}
+
+.app{
+  max-width:560px;margin:0 auto;min-height:100%;
+  padding:calc(env(safe-area-inset-top) + 12px) max(16px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 108px) max(16px,env(safe-area-inset-left));
+  display:flex;flex-direction:column;gap:20px;
+}
+.topbar{display:flex;align-items:center;justify-content:space-between;min-height:44px;gap:8px}
+.topbar .spacer{flex:1}
+.link-btn{display:inline-flex;align-items:center;gap:4px;min-height:44px;color:var(--accent);font-weight:600;padding:0 4px}
+.icon-btn{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;color:var(--muted)}
+.icon-btn:active{background:var(--soft)}
+.icon-btn.tint{color:var(--accent)}
+.large-title{font-family:var(--display);font-weight:700;font-size:40px;line-height:1.05;letter-spacing:-.01em;margin:0;text-wrap:balance;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.title-input{
+  font-family:var(--display);font-weight:700;font-size:34px;line-height:1.1;border:0;background:transparent;width:100%;
+  padding:4px 0;border-bottom:2px solid transparent;border-radius:0;
+}
+.title-input:focus{outline:none;border-bottom-color:var(--accent)}
+.sub{color:var(--muted);font-size:15px;margin:2px 0 0}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 -8px}
+.section-head h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0}
+
+/* Routine cards */
+.cards{display:grid;gap:12px}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 14px 16px 18px;
+  display:flex;align-items:center;gap:12px;text-align:left;width:100%;
+}
+.card:active{background:var(--soft)}
+.card-main{flex:1;min-width:0}
+.card-title{font-family:var(--display);font-weight:600;font-size:24px;line-height:1.15;overflow-wrap:anywhere}
+.card-meta{color:var(--muted);font-size:14px;margin-top:2px}
+.play-fab{
+  width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--accent-ink);
+  display:grid;place-items:center;flex:none;box-shadow:0 0 22px color-mix(in srgb,var(--accent) 40%,transparent);
+}
+.play-fab:disabled{opacity:.35}
+.ghost-card{
+  border:1.5px dashed var(--line);border-radius:18px;min-height:64px;color:var(--accent);font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+}
+.ghost-card:active{background:var(--soft)}
+.footnote{color:var(--muted);font-size:13px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none}
+.dot.ok{background:var(--accent)}
+.dot.warn{background:var(--prep)}
+
+/* Settings strip on routine page */
+.strip{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;align-items:center;justify-content:space-between;padding:6px 6px 6px 16px;gap:12px}
+.strip-label{font-weight:500}
+.strip-label small{display:block;color:var(--muted);font-size:13px;font-weight:400}
+.mini-stepper{display:flex;align-items:center;gap:2px}
+.mini-stepper .val{min-width:52px;text-align:center;font-weight:600}
+.step-btn{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:var(--accent);background:var(--soft);font-size:22px;font-weight:600}
+.step-btn:active{filter:brightness(.92)}
+
+/* Routine item list */
+.list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.row{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  display:flex;align-items:center;gap:4px;padding:6px 4px 6px 0;min-height:64px;
+  transition:transform .16s ease;position:relative;
+}
+.row.dragging{transition:none;z-index:5;box-shadow:0 10px 28px rgba(0,0,0,.18);border-color:var(--accent)}
+.handle{width:44px;align-self:stretch;display:grid;place-items:center;color:var(--muted);touch-action:none;cursor:grab;flex:none}
+.row-idx{font-family:var(--display);font-weight:600;color:var(--muted);width:20px;text-align:right;flex:none;margin-right:6px}
+.row-main{flex:1;min-width:0;padding:4px 0}
+.row-title{font-weight:600;overflow-wrap:anywhere;line-height:1.25}
+.row-sub{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;margin-top:3px}
+.tag{font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:6px;background:var(--soft);color:var(--muted)}
+.tag.lr{background:color-mix(in srgb,var(--left) 14%,transparent);color:var(--left)}
+.dur-btn{min-width:60px;min-height:44px;padding:0 10px;border-radius:10px;font-weight:600;background:var(--soft)}
+.dur-btn.custom{color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.empty{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px 18px;text-align:center;color:var(--muted)}
+.danger-link{color:var(--danger);font-weight:600;min-height:44px;align-self:center;padding:0 12px}
+
+/* Sticky bottom bar */
+.bottom-bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  padding:12px max(16px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 12px) max(16px,env(safe-area-inset-left));
+  background:linear-gradient(to top,var(--bg) 70%,transparent);
+}
+.bottom-bar .inner{max-width:560px;margin:0 auto;display:flex;gap:10px}
+.btn{
+  min-height:54px;border-radius:16px;font-weight:700;font-size:17px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;
+}
+.btn.primary{background:var(--accent);color:var(--accent-ink);flex:1}
+.btn.primary:disabled{opacity:.4}
+.btn.secondary{background:var(--soft);color:var(--ink)}
+.btn.danger{background:var(--danger);color:#fff;flex:1}
+.btn:active{filter:brightness(.93)}
+
+/* Sheets */
+.sheet-wrap{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.sheet-backdrop{position:absolute;inset:0;background:rgba(4,5,20,.6);animation:fade .18s ease}
+.sheet{
+  position:relative;width:100%;max-width:560px;max-height:calc(100% - env(safe-area-inset-top) - 24px);
+  background:var(--bg);border-radius:22px 22px 0 0;display:flex;flex-direction:column;
+  padding-bottom:env(safe-area-inset-bottom);animation:rise .24s cubic-bezier(.2,.8,.2,1);
+}
+.sheet-grip{width:38px;height:5px;border-radius:3px;background:var(--line);margin:8px auto 0;flex:none}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 8px 20px;gap:8px;flex:none}
+.sheet-head h3{font-family:var(--display);font-weight:700;font-size:26px;margin:0;line-height:1.1}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 16px 16px;display:flex;flex-direction:column;gap:14px;flex:1}
+.sheet-foot{padding:10px 16px 14px;display:flex;gap:10px;flex:none;border-top:1px solid var(--line)}
+@keyframes rise{from{transform:translateY(100%)}to{transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+.search{
+  width:100%;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0 14px;
+}
+.search:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.bank-list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.bank-row{display:flex;align-items:center;border-top:1px solid var(--line)}
+.bank-row:first-child{border-top:0}
+.bank-pick{flex:1;display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 8px 8px 14px;text-align:left;min-width:0}
+.bank-pick:active{background:var(--soft)}
+.check{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex:none;color:transparent}
+.bank-row.sel .check{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.bank-name{font-weight:500;overflow-wrap:anywhere}
+.bank-meta{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:13px;margin-top:2px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.field .lbl{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.text-input{min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0 14px;width:100%}
+.text-input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--soft);border-radius:12px;padding:3px;gap:3px}
+.seg.seg3{grid-template-columns:1fr 1fr 1fr}
+.seg.seg3 button{min-height:56px;font-size:18px}
+.seg button{min-height:44px;border-radius:10px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--raised);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.big-stepper{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px}
+.big-stepper .val{font-family:var(--display);font-weight:700;font-size:40px}
+.big-stepper .step-btn{width:64px;height:52px;font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:40px;padding:0 14px;border-radius:20px;background:var(--surface);border:1px solid var(--line);font-weight:600;font-size:15px}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.hint{color:var(--muted);font-size:14px;margin:0}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px 10px 16px;min-height:56px}
+.switch{width:52px;height:32px;border-radius:16px;background:var(--line);position:relative;flex:none;transition:background .18s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s}
+.switch[aria-checked="true"]{background:var(--accent)}
+.switch[aria-checked="true"]::after{transform:translateX(20px)}
+
+/* Player */
+.player{
+  position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 8px) max(16px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 16px) max(16px,env(safe-area-inset-left));
+  --pc:var(--accent);
+}
+/* Half-screen highlight for the side in use */
+.side-glow{position:absolute;top:0;bottom:0;width:50%;pointer-events:none;z-index:0}
+.side-glow[data-side="L"]{left:0;background:linear-gradient(to right,color-mix(in srgb,var(--pc) 40%,transparent),color-mix(in srgb,var(--pc) 10%,transparent) 65%,transparent)}
+.side-glow[data-side="R"]{right:0;background:linear-gradient(to left,color-mix(in srgb,var(--pc) 40%,transparent),color-mix(in srgb,var(--pc) 10%,transparent) 65%,transparent)}
+.side-glow.upcoming{animation:glowPulse 1.2s ease-in-out infinite alternate}
+@keyframes glowPulse{from{opacity:.25}to{opacity:.7}}
+.player .pinner{position:relative;z-index:1;max-width:560px;width:100%;margin:0 auto;display:flex;flex-direction:column;flex:1;min-height:0}
+.p-top{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.p-count{font-weight:600;color:var(--muted)}
+.p-left{color:var(--muted);font-size:15px;min-width:44px;text-align:right}
+.pbar{height:4px;border-radius:2px;background:var(--soft);overflow:hidden;margin-top:6px}
+.pbar i{display:block;height:100%;background:var(--pc);transition:width .3s linear}
+.p-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;min-height:0;padding:12px 0}
+.p-phase{min-height:40px;display:flex;align-items:center;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--pc)}
+.p-phase.big{font-family:var(--display);font-size:32px;letter-spacing:.05em;text-shadow:0 0 18px color-mix(in srgb,var(--pc) 55%,transparent)}
+.p-name{font-family:var(--display);font-weight:700;font-size:34px;line-height:1.08;margin:0;text-wrap:balance;max-width:20ch}
+.side-pill{min-height:32px;display:inline-flex;align-items:center;padding:0 14px;border-radius:16px;font-weight:700;font-size:15px;background:color-mix(in srgb,var(--pc) 15%,transparent);color:var(--pc)}
+.side-pill:empty{visibility:hidden}
+.ring{position:relative;width:min(72vw,300px,42vh);aspect-ratio:1;margin:8px 0}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .track{stroke:var(--soft)}
+.ring .prog{stroke:var(--pc);transition:stroke-dashoffset .1s linear;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--pc) 70%,transparent))}
+.ring .time{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:min(20vw,84px,12vh);letter-spacing:-.01em}
+.p-next{color:var(--muted);font-size:15px;min-height:21px}
+.p-ctrl{display:flex;align-items:center;justify-content:center;gap:28px;padding-top:8px}
+.c-btn{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--ink)}
+.c-btn.main{width:84px;height:84px;background:var(--pc);color:var(--bg);box-shadow:0 0 28px color-mix(in srgb,var(--pc) 45%,transparent)}
+.c-btn:active{filter:brightness(.9)}
+.paused-tag{font-weight:700;color:var(--muted);letter-spacing:.1em;font-size:13px;text-transform:uppercase}
+.done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px}
+.done .badge{width:88px;height:88px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.done h2{font-family:var(--display);font-weight:700;font-size:40px;margin:8px 0 0}
+.stats{display:flex;gap:28px;margin-top:8px}
+.stat b{display:block;font-family:var(--display);font-size:30px}
+.stat span{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+
+.field label.btn{font-size:17px;font-weight:700;color:var(--ink);text-transform:none;letter-spacing:0}
+#flash{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);transform:translate(-50%,20px);opacity:0;z-index:90;
+  background:var(--raised);color:var(--ink);padding:10px 16px;border-radius:12px;font-weight:600;font-size:15px;pointer-events:none;transition:opacity .2s,transform .2s;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:calc(100% - 32px);text-align:center}
+#flash.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="player-root"></div>
+<div id="sheet-root"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Starter exercise bank (full body) ---------- */
+const BUILTINS = [
+  ["b-neck-tilt","Neck Side Tilt",2],
+  ["b-levator","Levator Scapulae Stretch",2],
+  ["b-cross-shoulder","Cross-Body Shoulder Stretch",2],
+  ["b-triceps","Overhead Triceps Stretch",2],
+  ["b-doorway-chest","Doorway Chest Stretch",1],
+  ["b-wrist-flexor","Wrist Flexor Stretch",2],
+  ["b-thread","Thread the Needle",2],
+  ["b-cat-cow","Cat-Cow",1],
+  ["b-child","Child's Pose",1],
+  ["b-sphinx","Sphinx Pose",1],
+  ["b-seated-twist","Seated Spinal Twist",2],
+  ["b-supine-twist","Supine Spinal Twist",2],
+  ["b-side-bend","Standing Side Bend",2],
+  ["b-knees-chest","Knees-to-Chest",1],
+  ["b-hip-flexor","Kneeling Hip Flexor Stretch",2],
+  ["b-couch","Couch Stretch",2],
+  ["b-pigeon","Pigeon Pose",2],
+  ["b-figure-four","Figure-Four Stretch",2],
+  ["b-ninety","90/90 Hip Stretch",2],
+  ["b-butterfly","Butterfly Stretch",1],
+  ["b-frog","Frog Stretch",1],
+  ["b-forward-fold","Seated Forward Fold",1],
+  ["b-ham-stand","Standing Hamstring Stretch",2],
+  ["b-ham-lying","Lying Hamstring Stretch",2],
+  ["b-quad","Standing Quad Stretch",2],
+  ["b-calf","Wall Calf Stretch",2],
+  ["b-down-dog","Downward Dog",1],
+  ["b-worlds-greatest","World's Greatest Stretch",2]
+];
+const STARTER_ROUTINE = ["b-cat-cow","b-child","b-thread","b-hip-flexor","b-pigeon","b-ham-stand","b-quad","b-calf","b-cross-shoulder","b-neck-tilt"];
+const LS_KEY = "stretch-timer-v1";
+const DOC_ID = "stretch-timer";
+
+/* ---------- Helpers ---------- */
+const $ = (s, el=document) => el.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2, 10);
+const clone = o => JSON.parse(JSON.stringify(o));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+function mmss(s){ s = Math.max(0, Math.round(s)); return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0"); }
+function durLabel(s){ return s < 60 ? s + "s" : mmss(s); }
+function minutesLabel(s){ if (s < 60) return s + " sec"; const m = Math.round(s/60); return m + " min"; }
+
+const I = {
+  play:'<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>',
+  playL:'<svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>',
+  pauseL:'<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2"/></svg>',
+  next:'<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 6.2v11.6a.9.9 0 0 0 1.4.75L15 12.75a.9.9 0 0 0 0-1.5L6.4 5.45A.9.9 0 0 0 5 6.2z"/><rect x="16.5" y="5.5" width="2.5" height="13" rx="1"/></svg>',
+  prev:'<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.2v11.6a.9.9 0 0 1-1.4.75L9 12.75a.9.9 0 0 1 0-1.5l8.6-5.8A.9.9 0 0 1 19 6.2z"/><rect x="5" y="5.5" width="2.5" height="13" rx="1"/></svg>',
+  close:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  plus:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  back:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  gear:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.54V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.54-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.54V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.54 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.54 1z"/></svg>',
+  grip:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
+  check:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  checkL:'<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  pencil:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/></svg>',
+  list:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>'
+};
+
+/* ---------- State ---------- */
+function builtinExercises(){ return BUILTINS.map(([id,name,sides]) => ({id, name, sides, dur:60, builtin:true})); }
+function defaultState(){
+  return {
+    v:2, updatedAt:0,
+    settings:{ sound:true, switchSec:5 },
+    exercises: builtinExercises(),
+    routines:[{ id:uid(), name:"Daily Full Body", prep:5, items: STARTER_ROUTINE.map(ex => ({uid:uid(), ex, dur:null})) }]
+  };
+}
+// v2: default pause between stretches went from 10s to 5s
+function migrate(s){
+  if (!s || (s.v||1) >= 2) return false;
+  s.routines.forEach(r => { if (r.prep === 10) r.prep = 5; });
+  s.v = 2;
+  return true;
+}
+function valid(s){ return s && Array.isArray(s.exercises) && Array.isArray(s.routines) && s.settings; }
+function loadLocal(){ try { const s = JSON.parse(localStorage.getItem(LS_KEY)); return valid(s) ? s : null; } catch(e){ return null; } }
+function saveLocal(){ try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){} }
+
+let S = loadLocal() || defaultState();
+let view = { name:"home", rid:null };
+let SH = null;     // open sheet state
+let P = null;      // player state
+let D = null;      // drag state
+
+const getEx = id => S.exercises.find(e => e.id === id);
+const getR = id => S.routines.find(r => r.id === id);
+const itemDur = it => { const ex = getEx(it.ex); return it.dur != null ? it.dur : (ex ? ex.dur : 60); };
+function itemSecs(it){
+  const ex = getEx(it.ex); if (!ex) return 0;
+  const d = itemDur(it);
+  return ex.sides === 2 ? d*2 + (S.settings.switchSec||0) : d;
+}
+function routineSecs(r){ return r.items.reduce((a,it) => a + (getEx(it.ex) ? itemSecs(it) + (r.prep||0) : 0), 0); }
+function liveItems(r){ return r.items.filter(it => getEx(it.ex)); }
+
+function save(){
+  S.updatedAt = Date.now();
+  saveLocal();
+}
+
+/* ---------- Backup and restore (data lives on this device) ---------- */
+function storageNote(){
+  return `<p class="footnote" id="sync-note"><span class="dot ok"></span>Saved on this device. Back up anytime in Settings.</p>`;
+}
+function backupName(){ return `stretch-timer-backup-${new Date().toISOString().slice(0,10)}.json`; }
+async function exportBackup(){
+  const data = JSON.stringify({app:"stretch-timer", exportedAt:new Date().toISOString(), state:S}, null, 2);
+  const name = backupName();
+  let file = null;
+  try { file = new File([data], name, {type:"application/json"}); } catch(e){}
+  // iPhone: the share sheet offers Save to Files, AirDrop, Mail, etc.
+  if (file && navigator.canShare && navigator.share) {
+    try {
+      if (navigator.canShare({files:[file]})) { await navigator.share({files:[file], title:"Stretch Timer backup"}); flash("Backup ready"); return; }
+    } catch(e){ if (e && e.name === "AbortError") return; }
+  }
+  const blob = file || new Blob([data], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  flash("Backup downloaded");
+}
+function readBackup(file){
+  const r = new FileReader();
+  r.onload = () => {
+    let incoming = null;
+    try { const j = JSON.parse(r.result); incoming = valid(j && j.state) ? j.state : (valid(j) ? j : null); } catch(e){}
+    if (!incoming) { flash("That file isn't a Stretch Timer backup"); return; }
+    const n = incoming.routines.length;
+    confirmSheet("Restore this backup?", `This replaces everything on this device with the backup (${n} routine${n===1?"":"s"}, ${incoming.exercises.length} exercises).`, "Restore", () => {
+      S = clone(incoming); migrate(S); save();
+      view = {name:"home"}; render(); flash("Backup restored");
+    });
+  };
+  r.onerror = () => flash("Couldn't read that file");
+  r.readAsText(file);
+}
+let flashT = null;
+function flash(msg){
+  let el = $("#flash");
+  if (!el) { el = document.createElement("div"); el.id = "flash"; el.setAttribute("role","status"); document.body.appendChild(el); }
+  el.textContent = msg; el.classList.add("show");
+  clearTimeout(flashT); flashT = setTimeout(() => el.classList.remove("show"), 2400);
+}
+// Ask the browser not to clear this app's storage under pressure (ignored where unsupported)
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
+
+/* ---------- Audio cues ---------- */
+let AC = null;
+function unlockAudio(){
+  try {
+    if (!AC) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return; AC = new C(); }
+    if (AC.state === "suspended") AC.resume();
+    const b = AC.createBuffer(1, 1, 22050), s = AC.createBufferSource();
+    s.buffer = b; s.connect(AC.destination); s.start(0);
+  } catch(e){}
+}
+function tone(freq, dur, when=0, gain=0.22, type="sine"){
+  if (!AC || !S.settings.sound) return;
+  try {
+    const t = AC.currentTime + when;
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  } catch(e){}
+}
+const cue = {
+  tick:   () => tone(1046, 0.08, 0, 0.14, "triangle"),
+  go:     () => { tone(880, 0.32, 0, 0.26); },
+  sw:     () => { tone(660, 0.14, 0, 0.24); tone(660, 0.14, 0.2, 0.24); },
+  rest:   () => { tone(523, 0.22, 0, 0.22); },
+  finish: () => { tone(523, 0.18, 0); tone(659, 0.18, 0.18); tone(784, 0.4, 0.36, 0.26); }
+};
+
+/* ---------- Rendering: pages ---------- */
+function render(){
+  const root = $("#root");
+  if (view.name === "routine") { const r = getR(view.rid); if (!r) { view = {name:"home"}; } }
+  root.innerHTML = view.name === "routine" ? routinePage(getR(view.rid)) : homePage();
+}
+
+function homePage(){
+  const cards = S.routines.map(r => {
+    const n = liveItems(r).length;
+    return `<div class="card" role="button" tabindex="0" data-a="open-routine" data-id="${r.id}">
+      <div class="card-main">
+        <div class="card-title">${esc(r.name || "Untitled routine")}</div>
+        <div class="card-meta num">${n} stretch${n===1?"":"es"} · ${minutesLabel(routineSecs(r))}</div>
+      </div>
+      <button class="play-fab" data-a="start" data-id="${r.id}" aria-label="Start ${esc(r.name)}" ${n?"":"disabled"}>${I.play}</button>
+    </div>`;
+  }).join("");
+  return `<div class="app">
+    <div class="topbar">
+      <button class="link-btn" data-a="bank-manage">${I.list}<span>Exercises</span></button>
+      <span class="spacer"></span>
+      <button class="icon-btn" data-a="settings" aria-label="Settings">${I.gear}</button>
+    </div>
+    <div>
+      <h1 class="large-title">Stretch Timer</h1>
+      <p class="sub">Tap a routine to edit it, or press play to start.</p>
+    </div>
+    <div class="section-head"><h2>Routines</h2></div>
+    <div class="cards">
+      ${cards}
+      <button class="ghost-card" data-a="new-routine">${I.plus}<span>New routine</span></button>
+    </div>
+    ${storageNote()}
+  </div>`;
+}
+
+function routinePage(r){
+  const items = r.items.filter(it => getEx(it.ex));
+  const rows = items.map((it, i) => {
+    const ex = getEx(it.ex), two = ex.sides === 2, d = itemDur(it);
+    return `<li class="row" data-uid="${it.uid}">
+      <button class="handle" aria-label="Drag to reorder ${esc(ex.name)}">${I.grip}</button>
+      <span class="row-idx num">${i+1}</span>
+      <div class="row-main">
+        <div class="row-title">${esc(ex.name)}</div>
+        <div class="row-sub">${two ? '<span class="tag lr">L / R</span><span>each side</span>' : '<span class="tag">ONE</span><span>single hold</span>'}</div>
+      </div>
+      <button class="dur-btn num ${it.dur!=null?"custom":""}" data-a="item-dur" data-uid="${it.uid}" aria-label="Change time, currently ${mmss(d)}">${mmss(d)}</button>
+      <button class="icon-btn" data-a="item-remove" data-uid="${it.uid}" aria-label="Remove ${esc(ex.name)}">${I.close}</button>
+    </li>`;
+  }).join("");
+  const total = routineSecs(r);
+  return `<div class="app">
+    <div class="topbar">
+      <button class="link-btn" data-a="home">${I.back}<span>Routines</span></button>
+    </div>
+    <div>
+      <input class="title-input" id="rname" value="${esc(r.name)}" placeholder="Routine name" aria-label="Routine name" maxlength="60" enterkeyhint="done">
+      <p class="sub num" id="rtotal">${items.length} stretch${items.length===1?"":"es"} · about ${minutesLabel(total)}</p>
+    </div>
+    <div class="strip">
+      <div class="strip-label">Pause between stretches<small>Countdown before each stretch starts</small></div>
+      <div class="mini-stepper">
+        <button class="step-btn" data-a="prep" data-d="-5" aria-label="Shorter pause">−</button>
+        <span class="val num" id="prepval">${r.prep}s</span>
+        <button class="step-btn" data-a="prep" data-d="5" aria-label="Longer pause">+</button>
+      </div>
+    </div>
+    <div class="section-head"><h2>Order</h2><span class="hint" style="font-size:13px">Drag ${I.grip.replace('width="18" height="18"','width="12" height="12" style="display:inline;vertical-align:-1px"')} to reorder</span></div>
+    ${items.length ? `<ul class="list" id="items">${rows}</ul>` : `<div class="empty">No stretches yet. Add some from the exercise bank.</div>`}
+    <button class="ghost-card" data-a="bank-add">${I.plus}<span>Add stretches</span></button>
+    <button class="danger-link" data-a="delete-routine">Delete routine</button>
+  </div>
+  <div class="bottom-bar"><div class="inner">
+    <button class="btn primary" data-a="start" data-id="${r.id}" ${items.length?"":"disabled"}>${I.play}<span>Start routine</span></button>
+  </div></div>`;
+}
+
+/* ---------- Sheets ---------- */
+function openSheet(state){ SH = state; document.body.classList.add("locked"); renderSheet(); }
+function closeSheet(){ SH = null; $("#sheet-root").innerHTML = ""; if (!P) document.body.classList.remove("locked"); }
+function sheetShell(title, body, foot){
+  return `<div class="sheet-wrap">
+    <div class="sheet-backdrop" data-a="sheet-close"></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+      <div class="sheet-grip"></div>
+      <div class="sheet-head"><h3>${esc(title)}</h3><button class="icon-btn" data-a="sheet-close" aria-label="Close">${I.close}</button></div>
+      <div class="sheet-body">${body}</div>
+      ${foot ? `<div class="sheet-foot">${foot}</div>` : ""}
+    </div>
+  </div>`;
+}
+function renderSheet(){
+  const el = $("#sheet-root");
+  if (!SH) { el.innerHTML = ""; return; }
+  const k = SH.kind;
+  let html = "";
+  if (k === "bank") {
+    const adding = SH.mode === "add";
+    const n = SH.sel.size;
+    html = sheetShell(adding ? "Add stretches" : "Exercise bank",
+      `<input class="search" id="bank-q" type="search" placeholder="Search exercises" value="${esc(SH.q)}" autocomplete="off" aria-label="Search exercises">
+       <button class="ghost-card" data-a="ex-new" style="min-height:52px">${I.plus}<span>New exercise</span></button>
+       <ul class="bank-list" id="bank-list"></ul>
+       ${adding ? "" : '<p class="hint">Tap an exercise to edit its name, sides, or default time.</p>'}`,
+      adding ? `<button class="btn primary" data-a="bank-commit" id="bank-commit" ${n?"":"disabled"}>${n ? `Add ${n} stretch${n===1?"":"es"}` : "Select stretches"}</button>` : "");
+    el.innerHTML = html; renderBankList(); return;
+  }
+  if (k === "exform") {
+    html = sheetShell(SH.id ? "Edit exercise" : "New exercise",
+      `<div class="field"><label for="ex-name">Name</label>
+         <input class="text-input" id="ex-name" value="${esc(SH.name)}" placeholder="e.g. Lizard Pose" maxlength="60" autocomplete="off" enterkeyhint="done"></div>
+       <div class="field"><span class="lbl">Sides</span>
+         <div class="seg" role="group" aria-label="Sides">
+           <button data-a="ex-sides" data-v="1" aria-pressed="${SH.sides===1}">One side</button>
+           <button data-a="ex-sides" data-v="2" aria-pressed="${SH.sides===2}">Left &amp; right</button>
+         </div>
+         <p class="hint" id="ex-sides-hint">${sidesHint(SH.sides, SH.dur)}</p></div>
+       <div class="field"><span class="lbl">Default time${SH.sides===2?" per side":""}</span>${durEditor(SH.dur)}</div>
+       ${SH.id ? `<button class="danger-link" data-a="ex-delete">Delete exercise</button>` : ""}`,
+      `<button class="btn secondary" data-a="ex-cancel">Cancel</button><button class="btn primary" data-a="ex-save">Save</button>`);
+  }
+  if (k === "dur") {
+    const it = findItem(SH.rid, SH.uid), ex = it && getEx(it.ex);
+    if (!ex) { closeSheet(); return; }
+    html = sheetShell(ex.name,
+      `<div class="field"><span class="lbl">Time${ex.sides===2?" per side":""} in this routine</span>${durEditor(SH.dur)}</div>
+       <p class="hint">${ex.sides===2 ? `Runs ${mmss(SH.dur)} left, a ${S.settings.switchSec}s switch, then ${mmss(SH.dur)} right.` : "Single hold."} Default for this exercise: ${mmss(ex.dur)}.</p>
+       ${it.dur != null ? `<button class="link-btn" data-a="dur-reset" style="align-self:flex-start">Reset to default (${mmss(ex.dur)})</button>` : ""}`,
+      `<button class="btn secondary" data-a="sheet-close">Cancel</button><button class="btn primary" data-a="dur-save">Save</button>`);
+  }
+  if (k === "settings") {
+    const sw = S.settings.switchSec;
+    const missing = BUILTINS.filter(b => !getEx(b[0])).length;
+    html = sheetShell("Settings",
+      `<div class="toggle-row"><div class="strip-label">Sound cues<small>Beeps at the last 3 seconds, side switch, and stretch start</small></div>
+         <button class="switch" role="switch" aria-checked="${!!S.settings.sound}" data-a="toggle-sound" aria-label="Sound cues"></button></div>
+       <p class="hint">On iPhone, check that the ring/silent switch is on ring if you don't hear beeps.</p>
+       <div class="field"><span class="lbl">Switch-sides pause</span>
+         <div class="chips" role="group" aria-label="Switch-sides pause">
+           ${[0,3,5,10].map(v => `<button class="chip num" data-a="switch-sec" data-v="${v}" aria-pressed="${sw===v}">${v ? v+"s" : "None"}</button>`).join("")}
+         </div>
+         <p class="hint">Countdown between left and right on two-sided stretches.</p></div>
+       <div class="field"><span class="lbl">Starter exercises</span>
+         <button class="btn secondary" data-a="restore" ${missing?"":"disabled"} style="${missing?"":"opacity:.5"}">${missing ? `Restore ${missing} deleted starter exercise${missing===1?"":"s"}` : "All starter exercises present"}</button></div>
+       <div class="field"><span class="lbl">Backup</span>
+         <p class="hint">Your routines are stored on this device. Export a backup to keep a copy or move them to another phone.</p>
+         <div style="display:flex;gap:10px">
+           <button class="btn secondary" data-a="export" style="flex:1">Export backup</button>
+           <label class="btn secondary" for="import-file" style="flex:1;cursor:pointer">Import backup</label>
+         </div>
+         <input type="file" id="import-file" accept="application/json,.json" hidden>
+       </div>`, "");
+  }
+  if (k === "confirm") {
+    html = sheetShell(SH.title, `<p style="margin:0">${esc(SH.msg)}</p>`,
+      `<button class="btn secondary" data-a="sheet-close" style="flex:1">Cancel</button><button class="btn danger" data-a="confirm-ok">${esc(SH.ok)}</button>`);
+  }
+  el.innerHTML = html;
+}
+function sidesHint(sides, dur){
+  return sides === 2 ? `Timer runs ${mmss(dur)} on the left, a ${S.settings.switchSec}s switch, then ${mmss(dur)} on the right.` : `Timer runs once for ${mmss(dur)}.`;
+}
+const DUR_OPTIONS = [60,120,180];
+function durEditor(d){
+  return `<div class="seg seg3" role="group" aria-label="Time">
+      ${DUR_OPTIONS.map(p => `<button class="num" data-a="dur-set" data-v="${p}" aria-pressed="${d===p}">${p/60} min</button>`).join("")}
+    </div>`;
+}
+function updateDurUI(){
+  const v = $("#dur-val"); if (v) v.textContent = mmss(SH.dur);
+  document.querySelectorAll('[data-a="dur-set"]').forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === SH.dur)));
+  const h = $("#ex-sides-hint"); if (h && SH.kind === "exform") h.textContent = sidesHint(SH.sides, SH.dur);
+}
+function renderBankList(){
+  const ul = $("#bank-list"); if (!ul || !SH || SH.kind !== "bank") return;
+  const q = SH.q.trim().toLowerCase();
+  const list = S.exercises.filter(e => !q || e.name.toLowerCase().includes(q)).sort((a,b) => a.name.localeCompare(b.name));
+  if (!list.length) { ul.innerHTML = `<li class="bank-row"><div class="bank-pick" style="color:var(--muted)">No exercises match "${esc(SH.q)}".</div></li>`; return; }
+  const adding = SH.mode === "add";
+  ul.innerHTML = list.map(e => `<li class="bank-row ${SH.sel.has(e.id)?"sel":""}">
+      <button class="bank-pick" data-a="${adding?"bank-toggle":"ex-edit"}" data-id="${e.id}" aria-pressed="${adding ? SH.sel.has(e.id) : ""}">
+        ${adding ? `<span class="check">${I.check}</span>` : ""}
+        <span style="min-width:0"><span class="bank-name">${esc(e.name)}</span>
+        <span class="bank-meta">${e.sides===2?'<span class="tag lr">L / R</span>':'<span class="tag">ONE</span>'}<span class="num">${mmss(e.dur)}${e.sides===2?" each":""}</span>${e.builtin?"":"<span>· Custom</span>"}</span></span>
+      </button>
+      ${adding ? `<button class="icon-btn" data-a="ex-edit" data-id="${e.id}" aria-label="Edit ${esc(e.name)}">${I.pencil}</button>` : ""}
+    </li>`).join("");
+}
+function findItem(rid, u){ const r = getR(rid); return r && r.items.find(i => i.uid === u); }
+
+/* ---------- Player ---------- */
+function buildPhases(r){
+  const ph = [], sw = S.settings.switchSec || 0;
+  liveItems(r).forEach((it, n) => {
+    const ex = getEx(it.ex), d = itemDur(it);
+    if (r.prep > 0) ph.push({t:"prep", n, ex, side: ex.sides===2 ? "L" : null, secs:r.prep, work:d});
+    if (ex.sides === 2) {
+      ph.push({t:"work", n, ex, side:"L", secs:d});
+      if (sw > 0) ph.push({t:"switch", n, ex, side:"R", secs:sw});
+      ph.push({t:"work", n, ex, side:"R", secs:d});
+    } else ph.push({t:"work", n, ex, side:null, secs:d});
+  });
+  // suffix sums for "time left"
+  let acc = 0; for (let i = ph.length-1; i >= 0; i--) { ph[i].after = acc; acc += ph[i].secs; }
+  return {ph, total:acc, count: liveItems(r).length};
+}
+function startRoutine(id){
+  const r = getR(id); if (!r) return;
+  const b = buildPhases(r); if (!b.ph.length) return;
+  unlockAudio();
+  P = { rid:id, name:r.name, items:liveItems(r).map(it => getEx(it.ex)), ph:b.ph, total:b.total, count:b.count,
+        idx:0, acc:0, start:Date.now(), paused:false, lastSec:null, done:false, startedAt:Date.now(), shownIdx:-1 };
+  document.body.classList.add("locked");
+  renderPlayer();
+  phaseCue(P.ph[0]);
+  clearInterval(P.iv); P.iv = setInterval(tick, 100);
+}
+function elapsed(){ return P.paused ? P.acc : P.acc + (Date.now() - P.start)/1000; }
+function phaseCue(ph){ if (!ph) return; ({prep:cue.rest, work:cue.go, switch:cue.sw})[ph.t](); }
+function goTo(i){
+  if (i >= P.ph.length) return finish();
+  P.idx = clamp(i, 0, P.ph.length-1); P.acc = 0; P.start = Date.now(); P.lastSec = null;
+  if (!P.paused) phaseCue(P.ph[P.idx]);
+  renderPlayer();
+}
+/* Skip controls step by side: every work phase (left, right, or single hold) is one stop.
+   A lead-in or switch countdown belongs to the stop that follows it. */
+function stopFor(i){ return P.ph[i].t === "work" ? i : Math.min(i + 1, P.ph.length - 1); }
+function nextStop(){
+  const w = stopFor(P.idx);
+  let j = w + 1;
+  while (j < P.ph.length && P.ph[j].t !== "work") j++;
+  if (j >= P.ph.length) return finish();
+  if (P.ph[j].n === P.ph[w].n) return goTo(j);            // other side of the same stretch, start now
+  return goTo(P.ph[j-1].t === "prep" ? j - 1 : j);         // new stretch, with its 5s lead-in
+}
+function prevStop(){
+  const w = stopFor(P.idx);
+  let j = w - 1;
+  while (j >= 0 && P.ph[j].t !== "work") j--;
+  if (j < 0) return goTo(0);                               // already on the first side: restart it
+  return goTo(j);
+}
+function tick(){
+  if (!P || P.done) return;
+  let ph = P.ph[P.idx], el = elapsed(), moved = false;
+  while (el >= ph.secs) {
+    const over = el - ph.secs;
+    P.idx++;
+    if (P.idx >= P.ph.length) return finish();
+    P.acc = over; P.start = Date.now(); P.lastSec = null;
+    ph = P.ph[P.idx]; el = over; moved = true;
+  }
+  if (moved) { if (el < 1.5) phaseCue(ph); renderPlayer(); }
+  const rem = ph.secs - el, sec = Math.ceil(rem);
+  if (sec !== P.lastSec) {
+    if (P.lastSec !== null && sec < P.lastSec && sec >= 1 && sec <= 3 && !P.paused) cue.tick();
+    P.lastSec = sec;
+  }
+  updateClock(ph, rem);
+}
+function phaseColor(ph){
+  if (ph.t === "switch") return "var(--right)";
+  return ph.side === "L" ? "var(--left)" : ph.side === "R" ? "var(--right)" : "var(--single)";
+}
+const RC = 2 * Math.PI * 54;
+function renderPlayer(){
+  const root = $("#player-root");
+  if (!P) { root.innerHTML = ""; return; }
+  if (P.done) {
+    const secs = Math.round((Date.now() - P.startedAt)/1000);
+    root.innerHTML = `<div class="player"><div class="pinner">
+      <div class="p-top"><span></span><button class="icon-btn" data-a="player-close" aria-label="Close">${I.close}</button></div>
+      <div class="done">
+        <div class="badge">${I.checkL}</div>
+        <h2>Routine complete</h2>
+        <p class="sub" style="margin:0">${esc(P.name || "Routine")}</p>
+        <div class="stats">
+          <div class="stat"><b class="num">${P.count}</b><span>Stretches</span></div>
+          <div class="stat"><b class="num">${mmss(secs)}</b><span>Total time</span></div>
+        </div>
+      </div>
+      <button class="btn primary" data-a="player-close" style="flex:none">Done</button>
+    </div></div>`;
+    return;
+  }
+  const ph = P.ph[P.idx];
+  const phaseLabel = ph.t === "prep" ? `Starts in ${Math.ceil(ph.secs - elapsed())}` : ph.t === "switch" ? "Switch sides" : "";
+  let next;
+  if (ph.side === "L" && ph.t !== "switch") next = "Then the right side";
+  else if (ph.n + 1 < P.items.length) { const nx = P.items[ph.n+1]; next = `Up next: ${nx.name}${nx.sides===2?" (L / R)":""}`; }
+  else next = "Last stretch";
+  const glowSide = ph.t === "switch" ? "R" : ph.side;
+  const glow = glowSide ? `<div class="side-glow ${ph.t === "work" ? "active" : "upcoming"}" data-side="${glowSide}" aria-hidden="true"></div>` : "";
+  root.innerHTML = `<div class="player" style="--pc:${phaseColor(ph)}">${glow}<div class="pinner">
+    <div class="p-top">
+      <button class="icon-btn" data-a="player-end" aria-label="End session">${I.close}</button>
+      <span class="p-count num">${ph.n+1} of ${P.count}</span>
+      <span class="p-left num" id="p-left"></span>
+    </div>
+    <div class="pbar"><i id="p-bar"></i></div>
+    <div class="p-main">
+      <div class="p-phase num ${ph.t === "prep" ? "big" : ""}" id="p-phase">${phaseLabel}</div>
+      <h2 class="p-name">${esc(ph.ex.name)}</h2>
+      <div class="ring" role="timer" aria-live="off">
+        <svg viewBox="0 0 120 120">
+          <defs><linearGradient id="logo-grad" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stop-color="#2F5BFF"/><stop offset=".38" stop-color="#C04DFF"/><stop offset=".68" stop-color="#FF3C78"/><stop offset="1" stop-color="#FF6B35"/>
+          </linearGradient></defs>
+          <circle class="track" cx="60" cy="60" r="54" fill="none" stroke-width="7"/>
+          <circle class="prog" id="p-ring" cx="60" cy="60" r="54" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="${RC}" stroke-dashoffset="0" ${ph.side ? "" : 'style="stroke:url(#logo-grad)"'}/></svg>
+        <div class="time num" id="p-time">${mmss(ph.secs)}</div>
+      </div>
+      <div class="p-next">${esc(next)}</div>
+      <div class="paused-tag" id="p-paused" ${P.paused?"":"hidden"}>Paused</div>
+    </div>
+    <div class="p-ctrl">
+      <button class="c-btn" data-a="p-prev" aria-label="Previous side">${I.prev}</button>
+      <button class="c-btn main" data-a="p-toggle" id="p-toggle" aria-label="${P.paused?"Resume":"Pause"}">${P.paused?I.playL:I.pauseL}</button>
+      <button class="c-btn" data-a="p-next" aria-label="Next side">${I.next}</button>
+    </div>
+  </div></div>`;
+  updateClock(ph, ph.secs - elapsed());
+}
+function updateClock(ph, rem){
+  const t = $("#p-time"); if (!t) return;
+  if (ph.t === "prep") {
+    // the stretch's own screen, held at full time until the pause ends
+    t.textContent = mmss(ph.work);
+    $("#p-ring").setAttribute("stroke-dashoffset", "0");
+    $("#p-phase").textContent = `Starts in ${Math.max(1, Math.ceil(rem))}`;
+  } else {
+    t.textContent = mmss(Math.ceil(rem));
+    $("#p-ring").setAttribute("stroke-dashoffset", String(RC * (1 - clamp(rem/ph.secs, 0, 1))));
+  }
+  const left = ph.after + rem;
+  $("#p-left").textContent = mmss(Math.ceil(left));
+  $("#p-bar").style.width = (100 * (1 - left / P.total)).toFixed(2) + "%";
+}
+function finish(){
+  P.done = true; clearInterval(P.iv); cue.finish(); renderPlayer();
+}
+function closePlayer(){
+  if (P) clearInterval(P.iv);
+  P = null; renderPlayer();
+  if (!SH) document.body.classList.remove("locked");
+  render();
+}
+function togglePause(){
+  unlockAudio();
+  if (P.paused) { P.paused = false; P.start = Date.now(); }
+  else { P.acc = elapsed(); P.paused = true; }
+  const b = $("#p-toggle"); if (b) { b.innerHTML = P.paused ? I.playL : I.pauseL; b.setAttribute("aria-label", P.paused ? "Resume" : "Pause"); }
+  const p = $("#p-paused"); if (p) p.hidden = !P.paused;
+}
+
+/* ---------- Actions ---------- */
+function confirmSheet(title, msg, ok, onOk){ openSheet({kind:"confirm", title, msg, ok, onOk}); }
+
+const actions = {
+  "home": () => { view = {name:"home"}; render(); window.scrollTo(0,0); },
+  "open-routine": el => { view = {name:"routine", rid:el.dataset.id}; render(); window.scrollTo(0,0); },
+  "start": el => startRoutine(el.dataset.id),
+  "new-routine": () => {
+    const r = {id:uid(), name:"New routine", prep:5, items:[]};
+    S.routines.push(r); save();
+    view = {name:"routine", rid:r.id}; render(); window.scrollTo(0,0);
+    const inp = $("#rname"); if (inp) { inp.focus(); inp.select(); }
+  },
+  "delete-routine": () => {
+    const r = getR(view.rid);
+    confirmSheet("Delete routine?", `"${r.name || "Untitled routine"}" will be removed. Exercises stay in your bank.`, "Delete", () => {
+      S.routines = S.routines.filter(x => x.id !== r.id); save(); view = {name:"home"}; render();
+    });
+  },
+  "prep": el => {
+    const r = getR(view.rid); r.prep = clamp((r.prep||0) + (+el.dataset.d), 0, 60); save();
+    $("#prepval").textContent = r.prep + "s";
+    const items = liveItems(r); $("#rtotal").textContent = `${items.length} stretch${items.length===1?"":"es"} · about ${minutesLabel(routineSecs(r))}`;
+  },
+  "item-remove": el => {
+    const r = getR(view.rid); r.items = r.items.filter(i => i.uid !== el.dataset.uid); save(); render();
+  },
+  "item-dur": el => {
+    const it = findItem(view.rid, el.dataset.uid);
+    openSheet({kind:"dur", rid:view.rid, uid:el.dataset.uid, dur:itemDur(it)});
+  },
+  "dur-step": el => { SH.dur = clamp(SH.dur + (+el.dataset.d), 5, 600); updateDurUI(); },
+  "dur-set": el => { SH.dur = +el.dataset.v; updateDurUI(); },
+  "dur-save": () => {
+    const it = findItem(SH.rid, SH.uid), ex = getEx(it.ex);
+    it.dur = SH.dur === ex.dur ? null : SH.dur; save(); closeSheet(); render();
+  },
+  "dur-reset": () => { const it = findItem(SH.rid, SH.uid); it.dur = null; save(); closeSheet(); render(); },
+  "bank-add": () => openSheet({kind:"bank", mode:"add", rid:view.rid, sel:new Set(), q:""}),
+  "bank-manage": () => openSheet({kind:"bank", mode:"manage", sel:new Set(), q:""}),
+  "bank-toggle": el => {
+    const id = el.dataset.id; SH.sel.has(id) ? SH.sel.delete(id) : SH.sel.add(id);
+    const row = el.closest(".bank-row"); row.classList.toggle("sel", SH.sel.has(id)); el.setAttribute("aria-pressed", String(SH.sel.has(id)));
+    const b = $("#bank-commit"), n = SH.sel.size;
+    b.disabled = !n; b.textContent = n ? `Add ${n} stretch${n===1?"":"es"}` : "Select stretches";
+  },
+  "bank-commit": () => {
+    const r = getR(SH.rid); if (!r) return closeSheet();
+    // add in the order they were tapped
+    const ids = [...SH.sel].filter(id => getEx(id));
+    ids.forEach(ex => r.items.push({uid:uid(), ex, dur:null}));
+    save(); closeSheet(); render();
+    setTimeout(() => window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"}), 50);
+  },
+  "ex-new": () => { SH = {kind:"exform", id:null, name:SH.q || "", sides:2, dur:60, back:SH}; renderSheet(); setTimeout(() => $("#ex-name") && $("#ex-name").focus(), 250); },
+  "ex-edit": el => { const e = getEx(el.dataset.id); SH = {kind:"exform", id:e.id, name:e.name, sides:e.sides, dur:e.dur, back:SH}; renderSheet(); },
+  "ex-sides": el => {
+    SH.sides = +el.dataset.v;
+    document.querySelectorAll('[data-a="ex-sides"]').forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === SH.sides)));
+    renderSheetKeepName();
+  },
+  "ex-cancel": () => backToBank(),
+  "ex-save": () => {
+    const name = ($("#ex-name").value || "").trim();
+    if (!name) { const i = $("#ex-name"); i.focus(); i.placeholder = "Enter a name to save"; return; }
+    let newId = null;
+    if (SH.id) { const e = getEx(SH.id); e.name = name; e.sides = SH.sides; e.dur = SH.dur; }
+    else { newId = "c-" + uid(); S.exercises.push({id:newId, name, sides:SH.sides, dur:SH.dur, builtin:false}); }
+    save();
+    const back = SH.back;
+    if (back && back.mode === "add" && newId) back.sel.add(newId);
+    if (back) back.q = "";
+    backToBank();
+    if (view.name === "routine") render();
+  },
+  "ex-delete": () => {
+    const e = getEx(SH.id), uses = S.routines.reduce((a,r) => a + r.items.filter(i => i.ex === e.id).length, 0);
+    const back = SH.back;
+    confirmSheet("Delete exercise?", `"${e.name}" will be removed from the bank${uses ? ` and from ${uses} routine slot${uses===1?"":"s"}` : ""}.`, "Delete", () => {
+      S.exercises = S.exercises.filter(x => x.id !== e.id);
+      S.routines.forEach(r => r.items = r.items.filter(i => i.ex !== e.id));
+      if (back) back.sel.delete(e.id);
+      save(); render();
+      if (back) { SH = back; renderSheet(); return true; }
+    });
+  },
+  "confirm-ok": () => { const fn = SH.onOk; const keep = fn && fn(); if (!keep) closeSheet(); },
+  "sheet-close": () => closeSheet(),
+  "settings": () => openSheet({kind:"settings"}),
+  "toggle-sound": () => { S.settings.sound = !S.settings.sound; save(); renderSheet(); if (S.settings.sound) { unlockAudio(); cue.go(); } },
+  "switch-sec": el => { S.settings.switchSec = +el.dataset.v; save(); renderSheet(); render(); },
+  "export": () => exportBackup(),
+  "restore": () => {
+    builtinExercises().forEach(b => { if (!getEx(b.id)) S.exercises.push(b); });
+    save(); renderSheet();
+  },
+  "player-end": () => {
+    if (!P.paused) togglePause();
+    confirmSheet("End session?", "Your progress in this run won't be kept.", "End", () => { closeSheet(); closePlayer(); return true; });
+  },
+  "player-close": () => closePlayer(),
+  "p-toggle": () => togglePause(),
+  "p-next": () => { unlockAudio(); nextStop(); },
+  "p-prev": () => { unlockAudio(); prevStop(); }
+};
+function renderSheetKeepName(){
+  const inp = $("#ex-name"); if (inp) SH.name = inp.value;
+  renderSheet();
+}
+function backToBank(){
+  const back = SH && SH.back;
+  if (back) { SH = back; renderSheet(); } else closeSheet();
+}
+
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-a]"); if (!el) return;
+  // the play button sits inside a clickable card
+  const a = el.dataset.a, fn = actions[a];
+  if (fn) { e.preventDefault(); fn(el); }
+});
+document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches('.card[data-a]')) { e.preventDefault(); e.target.click(); }
+  if (e.key === "Enter" && e.target.id === "rname") e.target.blur();
+  if (e.key === "Enter" && e.target.id === "ex-name") { e.preventDefault(); actions["ex-save"](); }
+  if (e.key === "Escape" && SH) closeSheet();
+});
+document.addEventListener("input", e => {
+  if (e.target.id === "bank-q") { SH.q = e.target.value; renderBankList(); }
+  if (e.target.id === "ex-name" && SH) SH.name = e.target.value;
+  if (e.target.id === "rname") {
+    const r = getR(view.rid); if (!r) return;
+    r.name = e.target.value.slice(0, 60);
+    S.updatedAt = Date.now(); saveLocal();
+    clearTimeout(window.__nameT); window.__nameT = setTimeout(save, 500);
+  }
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "rname") save();
+  if (e.target.id === "import-file" && e.target.files && e.target.files[0]) { readBackup(e.target.files[0]); e.target.value = ""; }
+});
+
+/* ---------- Drag to reorder ---------- */
+document.addEventListener("pointerdown", e => {
+  const h = e.target.closest(".handle"); if (!h || D) return;
+  e.preventDefault();
+  const row = h.closest(".row"), list = row.parentElement, rows = [...list.children];
+  const idx = rows.indexOf(row);
+  const rects = rows.map(r => r.getBoundingClientRect());
+  const gap = rects.length > 1 ? rects[1].top - rects[0].bottom : 8;
+  D = {row, rows, idx, to:idx, y0:e.clientY, rects, shift:rects[idx].height + gap, pid:e.pointerId};
+  try { h.setPointerCapture(e.pointerId); } catch(_){}
+  row.classList.add("dragging");
+});
+document.addEventListener("pointermove", e => {
+  if (!D || e.pointerId !== D.pid) return;
+  e.preventDefault();
+  const {rects, idx} = D;
+  const minDy = rects[0].top - rects[idx].top, maxDy = rects[rects.length-1].bottom - rects[idx].bottom;
+  const dy = clamp(e.clientY - D.y0, minDy - 12, maxDy + 12);
+  D.row.style.transform = `translateY(${dy}px)`;
+  const center = rects[idx].top + rects[idx].height/2 + dy;
+  let to = idx;
+  for (let i = idx+1; i < rects.length; i++) if (center > rects[i].top + rects[i].height/2) to = i;
+  for (let i = idx-1; i >= 0; i--) if (center < rects[i].top + rects[i].height/2) to = i;
+  if (to !== D.to) {
+    D.to = to;
+    D.rows.forEach((r, i) => {
+      if (i === idx) return;
+      let s = 0;
+      if (idx < to && i > idx && i <= to) s = -D.shift;
+      if (idx > to && i < idx && i >= to) s = D.shift;
+      r.style.transform = s ? `translateY(${s}px)` : "";
+    });
+  }
+}, {passive:false});
+function endDrag(e){
+  if (!D || e.pointerId !== D.pid) return;
+  const {idx, to, row} = D;
+  row.classList.remove("dragging");
+  D = null;
+  if (to !== idx) {
+    const r = getR(view.rid);
+    const live = liveItems(r);
+    const moved = live[idx], target = live[to];
+    const from = r.items.indexOf(moved);
+    r.items.splice(from, 1);
+    const at = r.items.indexOf(target);
+    r.items.splice(to > idx ? at + 1 : at, 0, moved);
+    save();
+  }
+  render();
+}
+document.addEventListener("pointerup", endDrag);
+document.addEventListener("pointercancel", endDrag);
+// stop iOS from scrolling the page when a drag starts on a handle
+document.addEventListener("touchmove", e => { if (D) e.preventDefault(); }, {passive:false});
+
+/* ---------- Boot ---------- */
+if (migrate(S)) save();
+render();
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+}
+})();
+</script>
+</body>
+</html>
