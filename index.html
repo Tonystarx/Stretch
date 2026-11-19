@@ -325,7 +325,7 @@ function builtinExercises(){ return BUILTINS.map(([id,name,sides]) => ({id, name
 function defaultState(){
   return {
     v:2, updatedAt:0,
-    settings:{ sound:true, switchSec:5 },
+    settings:{ sound:true, switchSec:5, silentBeep:true },
     exercises: builtinExercises(),
     routines:[{ id:uid(), name:"Daily Full Body", prep:5, items: STARTER_ROUTINE.map(ex => ({uid:uid(), ex, dur:null})) }]
   };
@@ -421,8 +421,21 @@ function unlockAudio(){
     s.buffer = b; s.connect(AC.destination); s.start(0);
   } catch(e){}
 }
+// iOS: "playback" lets the beeps sound in Silent mode (it also pauses other audio such as music).
+function applyAudioSession(active){
+  try {
+    if (!navigator.audioSession) return;
+    const want = active && S.settings.sound && S.settings.silentBeep !== false ? "playback" : "auto";
+    if (navigator.audioSession.type !== want) navigator.audioSession.type = want;
+  } catch(e){}
+}
+function wakeAudio(){
+  try { if (AC && AC.state !== "running") AC.resume().catch(() => {}); } catch(e){}
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && P && !P.done) wakeAudio(); });
 function tone(freq, dur, when=0, gain=0.22, type="sine"){
   if (!AC || !S.settings.sound) return;
+  wakeAudio();
   try {
     const t = AC.currentTime + when;
     const o = AC.createOscillator(), g = AC.createGain();
@@ -580,7 +593,8 @@ function renderSheet(){
     html = sheetShell("Settings",
       `<div class="toggle-row"><div class="strip-label">Sound cues<small>Beeps at the last 3 seconds, side switch, and stretch start</small></div>
          <button class="switch" role="switch" aria-checked="${!!S.settings.sound}" data-a="toggle-sound" aria-label="Sound cues"></button></div>
-       <p class="hint">On iPhone, check that the ring/silent switch is on ring if you don't hear beeps.</p>
+       <div class="toggle-row"><div class="strip-label">Beep in Silent mode<small>On iPhone, this pauses music or podcasts while a routine runs</small></div>
+         <button class="switch" role="switch" aria-checked="${S.settings.silentBeep !== false}" data-a="toggle-silent" aria-label="Beep in Silent mode"></button></div>
        <div class="field"><span class="lbl">Switch-sides pause</span>
          <div class="chips" role="group" aria-label="Switch-sides pause">
            ${[0,3,5,10].map(v => `<button class="chip num" data-a="switch-sec" data-v="${v}" aria-pressed="${sw===v}">${v ? v+"s" : "None"}</button>`).join("")}
@@ -653,6 +667,7 @@ function buildPhases(r){
 function startRoutine(id){
   const r = getR(id); if (!r) return;
   const b = buildPhases(r); if (!b.ph.length) return;
+  applyAudioSession(true);
   unlockAudio();
   P = { rid:id, name:r.name, items:liveItems(r).map(it => getEx(it.ex)), ph:b.ph, total:b.total, count:b.count,
         idx:0, acc:0, start:Date.now(), paused:false, lastSec:null, done:false, startedAt:Date.now(), shownIdx:-1 };
@@ -788,6 +803,7 @@ function finish(){
 }
 function closePlayer(){
   if (P) clearInterval(P.iv);
+  applyAudioSession(false);
   P = null; renderPlayer();
   if (!SH) document.body.classList.remove("locked");
   render();
@@ -890,6 +906,7 @@ const actions = {
   "sheet-close": () => closeSheet(),
   "settings": () => openSheet({kind:"settings"}),
   "toggle-sound": () => { S.settings.sound = !S.settings.sound; save(); renderSheet(); if (S.settings.sound) { unlockAudio(); cue.go(); } },
+  "toggle-silent": () => { S.settings.silentBeep = S.settings.silentBeep === false; save(); renderSheet(); },
   "switch-sec": el => { S.settings.switchSec = +el.dataset.v; save(); renderSheet(); render(); },
   "export": () => exportBackup(),
   "restore": () => {
