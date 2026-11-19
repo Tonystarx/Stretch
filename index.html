@@ -152,12 +152,13 @@ svg{display:block}
 .sheet{
   position:relative;width:100%;max-width:560px;max-height:calc(100% - env(safe-area-inset-top) - 24px);
   background:var(--bg);border-radius:22px 22px 0 0;display:flex;flex-direction:column;
-  padding-bottom:env(safe-area-inset-bottom);animation:rise .24s cubic-bezier(.2,.8,.2,1);
+  padding-bottom:env(safe-area-inset-bottom);animation:rise .24s cubic-bezier(.2,.8,.2,1);overflow:hidden;
 }
 .sheet-grip{width:38px;height:5px;border-radius:3px;background:var(--line);margin:8px auto 0;flex:none}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 8px 20px;gap:8px;flex:none}
 .sheet-head h3{font-family:var(--display);font-weight:700;font-size:26px;margin:0;line-height:1.1}
-.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 16px 16px;display:flex;flex-direction:column;gap:14px;flex:1}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:4px 16px 16px;display:flex;flex-direction:column;gap:14px;flex:1 1 auto;min-height:0}
+.sheet-body > *{flex-shrink:0}  /* children keep full height so the body scrolls instead of clipping them */
 .sheet-foot{padding:10px 16px 14px;display:flex;gap:10px;flex:none;border-top:1px solid var(--line)}
 @keyframes rise{from{transform:translateY(100%)}to{transform:none}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
@@ -166,10 +167,29 @@ svg{display:block}
   width:100%;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0 14px;
 }
 .search:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.fig{display:block;color:currentColor}
+.fig polyline{fill:none;stroke:currentColor;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+.fig circle{fill:none;stroke:currentColor;stroke-width:4.5}
+.fig .far{opacity:.42}
+.fig .floor{stroke:var(--muted);stroke-width:1.6;opacity:.45}
+.fig .strap{stroke-width:1.8;stroke-dasharray:3 3}
+.fig.generic{opacity:.55}
+.thumb{width:44px;height:44px;flex:none;border-radius:10px;background:var(--soft);color:var(--ink);padding:3px}
+.thumb .fig{width:100%;height:100%}
+.p-fig{height:clamp(84px,18vh,150px);aspect-ratio:1;color:var(--pc);filter:drop-shadow(0 0 6px color-mix(in srgb,var(--pc) 45%,transparent))}
+.p-fig .fig{width:100%;height:100%}
+.p-fig.mirror .fig{transform:scaleX(-1)}
+.sel-wrap{display:flex;flex-direction:column;gap:8px}
+.sel-wrap:empty{display:none}
+.sel-chips{display:flex;flex-wrap:wrap;gap:8px}
+.sel-chip{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 6px 0 12px;border-radius:20px;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--ink);font-weight:600;font-size:15px;box-shadow:inset 0 0 0 1.5px var(--accent)}
+.sel-chip .n{color:var(--accent);font-family:var(--display);font-weight:700}
+.sel-chip .x{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.bank-add-btn{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--soft);color:var(--accent)}
 .bank-list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .bank-row{display:flex;align-items:center;border-top:1px solid var(--line)}
 .bank-row:first-child{border-top:0}
-.bank-pick{flex:1;display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 8px 8px 14px;text-align:left;min-width:0}
+.bank-pick{flex:1;display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 8px 8px 14px;text-align:left;min-width:0}
 .bank-pick:active{background:var(--soft)}
 .check{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex:none;color:transparent}
 .bank-row.sel .check{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -215,13 +235,13 @@ svg{display:block}
 .p-left{color:var(--muted);font-size:15px;min-width:44px;text-align:right}
 .pbar{height:4px;border-radius:2px;background:var(--soft);overflow:hidden;margin-top:6px}
 .pbar i{display:block;height:100%;background:var(--pc);transition:width .3s linear}
-.p-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;min-height:0;padding:12px 0}
+.p-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;min-height:0;padding:12px 0}
 .p-phase{min-height:40px;display:flex;align-items:center;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--pc)}
 .p-phase.big{font-family:var(--display);font-size:32px;letter-spacing:.05em;text-shadow:0 0 18px color-mix(in srgb,var(--pc) 55%,transparent)}
 .p-name{font-family:var(--display);font-weight:700;font-size:34px;line-height:1.08;margin:0;text-wrap:balance;max-width:20ch}
 .side-pill{min-height:32px;display:inline-flex;align-items:center;padding:0 14px;border-radius:16px;font-weight:700;font-size:15px;background:color-mix(in srgb,var(--pc) 15%,transparent);color:var(--pc)}
 .side-pill:empty{visibility:hidden}
-.ring{position:relative;width:min(72vw,300px,42vh);aspect-ratio:1;margin:8px 0}
+.ring{position:relative;width:min(70vw,290px,32vh);aspect-ratio:1;margin:8px 0}
 .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 .ring .track{stroke:var(--soft)}
 .ring .prog{stroke:var(--pc);transition:stroke-dashoffset .1s linear;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--pc) 70%,transparent))}
@@ -319,6 +339,55 @@ const I = {
   pencil:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/></svg>',
   list:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>'
 };
+
+/* ---------- Exercise figures: simple line drawings on a 100x100 grid (floor at y=88) ---------- */
+// h: head centre; n: near-side limbs and body (full strength); f: far-side limbs (faded);
+// s: strap or prop lines (thin, dashed); w: wall x; fl: floor line (default on).
+const POSES = {
+  "b-neck-tilt":      {h:[44,17], n:["50,24 50,50","41,28 59,28","44,50 56,50","45,50 44,69 44,88","55,50 56,69 56,88","41,28 38,40 37,52","59,28 61,14 47,11"]},
+  "b-levator":        {h:[45,22], n:["50,27 50,52","41,30 59,30","44,52 56,52","45,52 44,70 44,88","55,52 56,70 56,88","41,30 38,42 37,54","59,30 62,17 50,15"]},
+  "b-cross-shoulder": {h:[50,16], n:["50,23 50,50","41,28 59,28","44,50 56,50","45,50 44,69 44,88","55,50 56,69 56,88","59,28 50,32 34,32","41,28 44,42 50,33"]},
+  "b-triceps":        {h:[50,17], n:["50,24 50,50","41,28 59,28","44,50 56,50","45,50 44,69 44,88","55,50 56,69 56,88","59,28 57,9 49,21","41,28 43,16 55,10"]},
+  "b-doorway-chest":  {h:[59,16], w:36, n:["57,23 55,50","56,27 41,29 38,15","55,50 63,68 66,88"], f:["55,50 49,69 45,88","56,27 42,33 38,21"]},
+  "b-wrist-flexor":   {h:[47,15], n:["47,22 47,50","47,50 47,69 47,88","47,27 61,30 75,30 79,23"], f:["47,27 57,38 77,24"]},
+  "b-thread":         {h:[31,81], n:["64,62 40,77","64,62 64,86 83,87","40,78 56,86 72,86"], f:["40,77 30,73 22,86"]},
+  "b-cat-cow":        {h:[29,68], n:["66,58 56,49 44,51 36,59","36,59 36,73 36,86","66,58 66,86 84,87"], f:["38,60 39,73 39,86","68,59 69,86 86,87"]},
+  "b-child":          {h:[31,82], n:["66,74 38,79","66,74 49,86 73,87","38,79 24,85 10,86"], f:["38,80 26,84 13,84"]},
+  "b-sphinx":         {h:[25,59], n:["52,84 30,69","52,84 71,86 90,86","30,69 30,85 15,86"], f:["31,70 33,85 19,85"]},
+  "b-seated-twist":   {h:[44,50], n:["40,84 40,58","40,84 56,64 52,86","40,60 52,62 58,55"], f:["40,84 62,86 84,86","40,60 30,72 27,86"]},
+  "b-supine-twist":   {h:[50,13], fl:false, n:["50,20 50,56","28,27 72,27","50,56 47,72 46,88","50,56 34,62 31,78"]},
+  "b-side-bend":      {h:[36,18], n:["50,50 47,38 41,28","35,31 47,26","44,50 56,50","45,50 44,69 43,88","55,50 56,69 57,88","47,26 55,12 41,3","35,31 33,43 37,52"]},
+  "b-knees-chest":    {h:[15,82], n:["22,84 52,84","52,84 41,66 57,61","27,82 37,70 46,63"], f:["52,84 44,68 60,64"]},
+  "b-hip-flexor":     {h:[52,28], n:["50,62 51,36","50,62 67,66 68,88","51,40 60,52 66,62"], f:["50,62 40,86 23,86"]},
+  "b-couch":          {h:[46,28], w:18, n:["44,62 45,36","44,62 60,66 61,88","45,40 54,52 60,63"], f:["44,62 28,86 21,64"]},
+  "b-pigeon":         {h:[47,40], n:["52,74 48,48","52,74 34,84 50,87","48,52 42,70 40,86"], f:["52,74 72,84 92,87"]},
+  "b-figure-four":    {h:[13,82], n:["20,84 50,84","50,84 60,66 75,68","26,82 40,72 56,69"], f:["50,84 67,78 60,64"]},
+  "b-ninety":         {h:[50,22], n:["50,29 50,58","42,33 58,33","42,33 36,46 34,60","58,33 64,46 66,60","46,58 30,64 52,72","54,58 72,64 78,54"]},
+  "b-butterfly":      {h:[50,22], n:["50,29 50,58","42,33 58,33","44,58 56,58","44,58 27,67 48,74","56,58 73,67 52,74","42,33 40,52 47,71","58,33 60,52 53,71"]},
+  "b-frog":           {h:[50,50], n:["50,57 50,68","40,59 60,59","40,59 35,84 41,87","60,59 65,84 59,87","50,68 15,86","50,68 85,86"]},
+  "b-forward-fold":   {h:[64,62], n:["32,84 56,66","32,84 58,86 84,86","55,68 71,78 84,82"]},
+  "b-ham-stand":      {h:[70,30], n:["44,50 64,36","44,50 58,68 70,86 73,80","62,38 62,50 60,60"], f:["44,50 44,69 44,88"]},
+  "b-ham-lying":      {h:[15,82], s:["43,66 54,38"], n:["22,84 50,84","50,84 52,62 54,40","28,82 36,72 43,66"], f:["50,84 70,85 90,85"]},
+  "b-quad":           {h:[52,15], n:["50,22 50,50","50,50 52,69 40,55","50,27 46,40 41,53"], f:["50,50 50,69 50,88","50,27 60,35 68,40"]},
+  "b-calf":           {h:[71,23], w:80, n:["50,54 66,30","66,32 74,30 79,28","50,54 62,68 62,88"], f:["50,54 38,72 26,88"]},
+  "b-down-dog":       {h:[36,72], n:["56,40 30,68 24,86","56,40 70,62 84,86 89,86"], f:["56,40 33,67 28,86"]},
+  "b-worlds-greatest":{h:[65,36], n:["46,60 60,42","46,60 64,66 64,88","60,44 58,66 56,86","60,42 62,24 64,8"], f:["46,60 28,74 12,86"]}
+};
+// Custom exercises: a neutral figure reaching up
+const GENERIC_POSE = {h:[50,16], generic:true, n:["50,23 50,50","41,28 59,28","44,50 56,50","45,50 43,69 41,88","55,50 57,69 59,88","41,28 34,16 30,5","59,28 66,16 70,5"]};
+
+function figureSVG(exId, cls){
+  const p = POSES[exId] || GENERIC_POSE;
+  const pl = (pts, c) => `<polyline class="${c}" points="${pts}"/>`;
+  const parts = [];
+  if (p.fl !== false) parts.push(`<line class="floor" x1="4" y1="89" x2="96" y2="89"/>`);
+  if (p.w != null) parts.push(`<line class="floor" x1="${p.w}" y1="6" x2="${p.w}" y2="89"/>`);
+  (p.f || []).forEach(x => parts.push(pl(x, "far")));
+  (p.s || []).forEach(x => parts.push(pl(x, "strap")));
+  (p.n || []).forEach(x => parts.push(pl(x, "near")));
+  parts.push(`<circle cx="${p.h[0]}" cy="${p.h[1]}" r="6.5"/>`);
+  return `<svg class="fig ${cls||""} ${p.generic ? "generic" : ""}" viewBox="0 0 100 100" aria-hidden="true">${parts.join("")}</svg>`;
+}
 
 /* ---------- State ---------- */
 function builtinExercises(){ return BUILTINS.map(([id,name,sides]) => ({id, name, sides, dur:60, builtin:true})); }
@@ -499,9 +568,10 @@ function routinePage(r){
     return `<li class="row" data-uid="${it.uid}">
       <button class="handle" aria-label="Drag to reorder ${esc(ex.name)}">${I.grip}</button>
       <span class="row-idx num">${i+1}</span>
+      <span class="thumb" style="margin-right:8px">${figureSVG(ex.id)}</span>
       <div class="row-main">
         <div class="row-title">${esc(ex.name)}</div>
-        <div class="row-sub">${two ? '<span class="tag lr">L / R</span><span>each side</span>' : '<span class="tag">ONE</span><span>single hold</span>'}</div>
+        <div class="row-sub">${two ? '<span class="tag lr">L / R</span>' : '<span class="tag">ONE</span>'}</div>
       </div>
       <button class="dur-btn num ${it.dur!=null?"custom":""}" data-a="item-dur" data-uid="${it.uid}" aria-label="Change time, currently ${mmss(d)}">${mmss(d)}</button>
       <button class="icon-btn" data-a="item-remove" data-uid="${it.uid}" aria-label="Remove ${esc(ex.name)}">${I.close}</button>
@@ -557,10 +627,11 @@ function renderSheet(){
     const adding = SH.mode === "add";
     const n = SH.sel.size;
     html = sheetShell(adding ? "Add stretches" : "Exercise bank",
-      `<input class="search" id="bank-q" type="search" placeholder="Search exercises" value="${esc(SH.q)}" autocomplete="off" aria-label="Search exercises">
+      `${adding ? '<div class="sel-wrap" id="bank-sel"></div>' : ""}
+       <input class="search" id="bank-q" type="search" placeholder="Search exercises" value="${esc(SH.q)}" autocomplete="off" aria-label="Search exercises">
        <button class="ghost-card" data-a="ex-new" style="min-height:52px">${I.plus}<span>New exercise</span></button>
        <ul class="bank-list" id="bank-list"></ul>
-       ${adding ? "" : '<p class="hint">Tap an exercise to edit its name, sides, or default time.</p>'}`,
+       ${adding ? '<p class="hint" id="bank-hidden"></p>' : '<p class="hint">Tap an exercise to edit its name, sides, or default time.</p>'}`,
       adding ? `<button class="btn primary" data-a="bank-commit" id="bank-commit" ${n?"":"disabled"}>${n ? `Add ${n} stretch${n===1?"":"es"}` : "Select stretches"}</button>` : "");
     el.innerHTML = html; renderBankList(); return;
   }
@@ -633,18 +704,39 @@ function updateDurUI(){
 }
 function renderBankList(){
   const ul = $("#bank-list"); if (!ul || !SH || SH.kind !== "bank") return;
-  const q = SH.q.trim().toLowerCase();
-  const list = S.exercises.filter(e => !q || e.name.toLowerCase().includes(q)).sort((a,b) => a.name.localeCompare(b.name));
-  if (!list.length) { ul.innerHTML = `<li class="bank-row"><div class="bank-pick" style="color:var(--muted)">No exercises match "${esc(SH.q)}".</div></li>`; return; }
   const adding = SH.mode === "add";
-  ul.innerHTML = list.map(e => `<li class="bank-row ${SH.sel.has(e.id)?"sel":""}">
-      <button class="bank-pick" data-a="${adding?"bank-toggle":"ex-edit"}" data-id="${e.id}" aria-pressed="${adding ? SH.sel.has(e.id) : ""}">
-        ${adding ? `<span class="check">${I.check}</span>` : ""}
+  const q = SH.q.trim().toLowerCase();
+  let inRoutine = new Set();
+  if (adding) { const r = getR(SH.rid); if (r) inRoutine = new Set(r.items.map(i => i.ex)); }
+  // drop selections that no longer exist
+  [...SH.sel].forEach(id => { if (!getEx(id)) SH.sel.delete(id); });
+  if (adding) renderSelected();
+  const pool = S.exercises.filter(e => !adding || (!inRoutine.has(e.id) && !SH.sel.has(e.id)));
+  const list = pool.filter(e => !q || e.name.toLowerCase().includes(q)).sort((a,b) => a.name.localeCompare(b.name));
+  const hiddenNote = $("#bank-hidden");
+  if (hiddenNote) { const n = S.exercises.filter(e => inRoutine.has(e.id)).length; hiddenNote.textContent = n ? `${n} stretch${n===1?" is":"es are"} already in this routine and hidden here.` : ""; }
+  if (!list.length) {
+    const msg = q ? `No exercises match "${esc(SH.q)}".` : (adding ? "Every exercise is already in this routine or selected." : "No exercises yet.");
+    ul.innerHTML = `<li class="bank-row"><div class="bank-pick" style="color:var(--muted)">${msg}</div></li>`; return;
+  }
+  ul.innerHTML = list.map(e => `<li class="bank-row">
+      <button class="bank-pick" data-a="${adding?"bank-toggle":"ex-edit"}" data-id="${e.id}" ${adding ? `aria-label="Add ${esc(e.name)}"` : ""}>
+        ${adding ? `<span class="bank-add-btn">${I.plus}</span>` : ""}
+        <span class="thumb">${figureSVG(e.id)}</span>
         <span style="min-width:0"><span class="bank-name">${esc(e.name)}</span>
         <span class="bank-meta">${e.sides===2?'<span class="tag lr">L / R</span>':'<span class="tag">ONE</span>'}<span class="num">${mmss(e.dur)}${e.sides===2?" each":""}</span>${e.builtin?"":"<span>· Custom</span>"}</span></span>
       </button>
       ${adding ? `<button class="icon-btn" data-a="ex-edit" data-id="${e.id}" aria-label="Edit ${esc(e.name)}">${I.pencil}</button>` : ""}
     </li>`).join("");
+}
+function renderSelected(){
+  const box = $("#bank-sel"); if (!box) return;
+  const ids = [...SH.sel];
+  box.innerHTML = ids.length ? `<div class="section-head" style="margin:0"><h2>Adding, in this order</h2></div>
+    <div class="sel-chips">${ids.map((id, i) => { const e = getEx(id);
+      return `<span class="sel-chip"><span class="n num">${i+1}</span>${esc(e.name)}<button class="x" data-a="bank-unsel" data-id="${id}" aria-label="Remove ${esc(e.name)}">${I.close.replace('width="22" height="22"','width="14" height="14"')}</button></span>`; }).join("")}</div>` : "";
+  const b = $("#bank-commit"), n = ids.length;
+  if (b) { b.disabled = !n; b.textContent = n ? `Add ${n} stretch${n===1?"":"es"}` : "Select stretches"; }
 }
 function findItem(rid, u){ const r = getR(rid); return r && r.items.find(i => i.uid === u); }
 
@@ -763,6 +855,7 @@ function renderPlayer(){
     <div class="p-main">
       <div class="p-phase num ${ph.t === "prep" ? "big" : ""}" id="p-phase">${phaseLabel}</div>
       <h2 class="p-name">${esc(ph.ex.name)}</h2>
+      <div class="p-fig ${glowSide === "R" ? "mirror" : ""}">${figureSVG(ph.ex.id)}</div>
       <div class="ring" role="timer" aria-live="off">
         <svg viewBox="0 0 120 120">
           <defs><linearGradient id="logo-grad" x1="0" y1="1" x2="1" y2="0">
@@ -856,12 +949,8 @@ const actions = {
   "dur-reset": () => { const it = findItem(SH.rid, SH.uid); it.dur = null; save(); closeSheet(); render(); },
   "bank-add": () => openSheet({kind:"bank", mode:"add", rid:view.rid, sel:new Set(), q:""}),
   "bank-manage": () => openSheet({kind:"bank", mode:"manage", sel:new Set(), q:""}),
-  "bank-toggle": el => {
-    const id = el.dataset.id; SH.sel.has(id) ? SH.sel.delete(id) : SH.sel.add(id);
-    const row = el.closest(".bank-row"); row.classList.toggle("sel", SH.sel.has(id)); el.setAttribute("aria-pressed", String(SH.sel.has(id)));
-    const b = $("#bank-commit"), n = SH.sel.size;
-    b.disabled = !n; b.textContent = n ? `Add ${n} stretch${n===1?"":"es"}` : "Select stretches";
-  },
+  "bank-toggle": el => { SH.sel.add(el.dataset.id); renderBankList(); },
+  "bank-unsel": el => { SH.sel.delete(el.dataset.id); renderBankList(); },
   "bank-commit": () => {
     const r = getR(SH.rid); if (!r) return closeSheet();
     // add in the order they were tapped
