@@ -181,6 +181,7 @@ svg{display:block}
 .fig polyline{fill:none;stroke:currentColor;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
 .fig circle{fill:none;stroke:currentColor;stroke-width:4.5}
 .fig .far{opacity:.42}
+.fig circle.prop{stroke-width:2.4;fill:currentColor;fill-opacity:.22;stroke-opacity:.8}
 .fig .floor{stroke:var(--muted);stroke-width:1.6;opacity:.45}
 .fig .strap{stroke-width:1.8;stroke-dasharray:3 3}
 .fig.generic{opacity:.55}
@@ -328,7 +329,24 @@ const BUILTINS = [
   ["b-fold-shoulder","Forward Fold with Shoulder Opener",1],
   ["b-puppy","Puppy Pose",1],
   ["b-standing-bow","Standing Bow Pulling Pose",2],
-  ["b-camel","Camel Pose",1]
+  ["b-camel","Camel Pose",1],
+  ["b-roll-feet","Foot Roll",2],
+  ["b-roll-calf","Calf Roll",2],
+  ["b-roll-outer-calf","Outer Calf Roll",2],
+  ["b-roll-hamstring","Hamstring Roll",2],
+  ["b-smash-hamstring","Hamstring Smash",2],
+  ["b-roll-quad","Quad Roll",2],
+  ["b-roll-adductor","Inner Thigh Roll",2],
+  ["b-roll-outer-thigh","Outer Thigh Roll",2],
+  ["b-roll-glute","Glute Roll",2],
+  ["b-roll-low-back","Lower Back Side Roll",2],
+  ["b-roll-lats","Lat Roll",2],
+  ["b-roll-upper-back","Upper Back Roll",1],
+  ["b-roll-t-ext","Upper Back Extension",1],
+  ["b-smash-pec","Pec Smash",2],
+  ["b-smash-bicep","Bicep Smash",2],
+  ["b-smash-tricep","Tricep Smash",2],
+  ["b-smash-shoulder","Shoulder Smash",2]
 ];
 const STARTER_ROUTINE = ["b-cat-cow","b-child","b-thread","b-hip-flexor","b-pigeon","b-ham-stand","b-quad","b-calf","b-cross-shoulder","b-neck-tilt"];
 const LS_KEY = "stretch-timer-v1";
@@ -365,6 +383,23 @@ const I = {
 // h: head centre; n: near-side limbs and body (full strength); f: far-side limbs (faded);
 // s: strap or prop lines (thin, dashed); w: wall x; fl: floor line (default on).
 const POSES = {
+  "b-roll-feet":      {h:[51,15], o:[[61,84,4]], n:["50,22 50,50","50,50 54,66 57,78 65,79","50,27 52,40 53,52"], f:["50,50 49,69 48,88"]},
+  "b-roll-calf":      {h:[23,51], o:[[60,81,7]], n:["38,72 28,58","38,72 54,73 78,75","28,60 24,74 20,87"], f:["38,72 56,69 78,71"]},
+  "b-roll-outer-calf":{h:[23,51], o:[[60,81,7]], n:["38,72 28,58","38,72 54,73 78,75","28,60 24,74 20,87"], f:["38,72 50,60 56,87"]},
+  "b-smash-hamstring":{h:[21,53], o:[[48,84,4]], n:["34,77 26,60","34,77 50,79 74,86","26,62 22,75 18,87"], f:["34,77 50,66 56,87"]},
+  "b-roll-hamstring": {h:[21,51], o:[[47,81,7]], n:["34,73 26,58","34,73 52,74 76,79","26,60 22,74 18,87"], f:["34,73 52,71 76,74"]},
+  "b-roll-quad":      {h:[19,63], o:[[64,81,7]], n:["28,70 54,73","28,70 28,86 16,87","54,73 70,74 92,80"], f:["54,73 72,77 92,83"]},
+  "b-roll-adductor":  {h:[19,63], o:[[64,82,6]], n:["28,70 54,73","28,70 28,86 16,87","54,73 66,76 70,64"], f:["54,73 72,80 92,85"]},
+  "b-roll-outer-thigh":{h:[19,62], o:[[64,82,6]], n:["27,69 50,75","27,69 25,86 15,87","50,75 72,76 93,82"], f:["50,75 60,62 64,87"]},
+  "b-roll-glute":     {h:[36,40], o:[[46,81,7]], n:["46,73 38,48","46,73 57,56 71,62","38,52 30,70 28,87"], f:["46,73 62,62 66,87"]},
+  "b-roll-low-back":  {h:[17,63], o:[[42,82,6]], n:["26,70 56,74","26,70 24,86 13,87","56,74 75,80 94,86"], f:["56,74 67,64 71,87"]},
+  "b-roll-lats":      {h:[21,70], o:[[31,82,6]], n:["31,76 58,80","31,76 16,79 3,80","58,80 76,84 95,86"], f:["58,80 70,69 73,87","36,75 44,82 46,87"]},
+  "b-roll-upper-back":{h:[23,66], o:[[34,81,7]], n:["34,73 56,70","56,70 67,57 73,87","32,72 27,58 21,63"], f:["56,70 70,59 77,87"]},
+  "b-roll-t-ext":     {h:[20,80], o:[[41,81,7]], n:["62,86 41,73 28,78","62,86 73,66 81,87","33,75 37,64"], f:["62,86 76,67 85,87"]},
+  "b-smash-pec":      {h:[63,17], w:71, o:[[67,33,3.5]], n:["56,52 61,25","61,28 54,41 56,54","56,52 54,70 52,88"], f:["56,52 58,70 60,88"]},
+  "b-smash-bicep":    {h:[33,64], o:[[30,82,4]], n:["60,64 40,72","40,73 28,77 14,86","60,64 60,86 79,87"], f:["40,72 44,87","62,65 63,86 81,87"]},
+  "b-smash-tricep":   {h:[24,70], o:[[16,83,4]], n:["30,78 58,82","30,77 15,78 3,80","58,82 76,85 95,87"], f:["58,82 70,71 73,87"]},
+  "b-smash-shoulder": {h:[12,80], o:[[22,85,3]], n:["21,80 50,84","23,80 30,64 39,57","50,84 62,68 70,87"], f:["23,82 32,86 40,87"]},
   "b-malasana":       {h:[49,43], n:["44,79 47,51","44,79 64,63 60,88 67,88","47,55 61,64 53,58"], f:["44,79 66,66 63,88"]},
   "b-low-lunge":      {h:[41,29], n:["48,62 46,37","48,62 66,66 67,88","46,38 53,22 57,7"], f:["48,62 38,86 22,86","46,38 51,22 54,7"]},
   "b-fold-shoulder":  {h:[56,79], n:["46,46 59,70","46,46 48,67 48,88","58,70 51,54 39,40"], f:["46,46 44,67 44,88"]},
@@ -409,6 +444,7 @@ function figureSVG(exId, cls){
   const parts = [];
   if (p.fl !== false) parts.push(`<line class="floor" x1="4" y1="89" x2="96" y2="89"/>`);
   if (p.w != null) parts.push(`<line class="floor" x1="${p.w}" y1="6" x2="${p.w}" y2="89"/>`);
+  (p.o || []).forEach(([cx, cy, r]) => parts.push(`<circle class="prop" cx="${cx}" cy="${cy}" r="${r}"/>`));
   (p.f || []).forEach(x => parts.push(pl(x, "far")));
   (p.s || []).forEach(x => parts.push(pl(x, "strap")));
   (p.n || []).forEach(x => parts.push(pl(x, "near")));
@@ -424,33 +460,88 @@ const NOTES = {
   "b-pigeon": "Front shin as parallel to the mat edge as possible. Stay upright or fold forward over the front leg for a deeper stretch.",
   "b-supine-twist": "On your back, draw one knee across your body and extend the same-side arm out. Keep both shoulder blades on the floor.",
   "b-puppy": "Knees under hips, walk hands forward, melt chest toward the floor. Keep hips stacked over knees.",
-  "b-standing-bow": "Standing on one leg, grab the opposite foot behind you. Kick into your hand and hinge forward."
+  "b-standing-bow": "Standing on one leg, grab the opposite foot behind you. Kick into your hand and hinge forward.",
+  "b-neck-tilt": "Sit or stand tall with shoulders down. Tilt one ear toward your shoulder until you feel a stretch along the opposite side of your neck.",
+  "b-levator": "Turn your head toward one armpit and lower your chin. Use that hand to gently draw your head down while the opposite shoulder stays low.",
+  "b-cross-shoulder": "Bring one arm straight across your chest at shoulder height. Use the other hand at the elbow to draw it closer without twisting your torso.",
+  "b-triceps": "Reach one arm overhead, bend the elbow, and drop your hand behind your head. Use the other hand to ease the elbow back.",
+  "b-doorway-chest": "Forearms on the door frame, elbows bent at shoulder height. Step one foot through and lean forward until your chest opens.",
+  "b-wrist-flexor": "Hold one arm straight out, palm up. Use the other hand to gently pull the fingers down and back toward you.",
+  "b-thread": "Start on hands and knees. Slide one arm under your body along the floor, lowering that shoulder and ear toward the mat.",
+  "b-cat-cow": "On hands and knees, wrists under shoulders. Alternate rounding your back toward the ceiling and letting your belly drop as you look forward.",
+  "b-child": "Kneel and sit your hips back toward your heels. Fold forward, rest your forehead down, and reach your arms long in front.",
+  "b-sphinx": "Lie face down with elbows under shoulders and forearms flat. Lift your chest gently while your hips and legs stay relaxed on the floor.",
+  "b-seated-twist": "Sit tall with one knee bent and that foot crossed over the straight leg. Hook your opposite elbow outside the knee and turn toward the bent leg.",
+  "b-side-bend": "Stand with feet hip-width apart. Reach one arm overhead and lean to the opposite side, keeping hips steady and chest facing forward.",
+  "b-knees-chest": "Lie on your back. Draw both knees toward your chest with hands behind the knees, keeping your head and lower back on the floor.",
+  "b-camel": "Kneel with knees hip-width apart and hips over knees. Lift your chest, then reach back for your heels while pressing your hips forward.",
+  "b-hip-flexor": "Kneel on one knee with the other foot forward. Tuck your pelvis slightly and shift your hips forward until the front of the back hip stretches.",
+  "b-couch": "Kneel facing away from a wall or couch with your back shin up against it. Step the other foot forward, lift your chest, and squeeze your glutes.",
+  "b-figure-four": "Lie on your back with knees bent. Cross one ankle over the opposite knee, then pull that thigh toward your chest.",
+  "b-ninety": "Sit with both knees bent to 90 degrees, one leg in front and one to the side behind you. Sit tall and lean gently over the front shin.",
+  "b-butterfly": "Sit tall with the soles of your feet together and knees out to the sides. Hold your feet and let your knees relax toward the floor.",
+  "b-frog": "On hands and knees, slide your knees wide with ankles in line with knees. Lower onto your forearms and ease your hips back.",
+  "b-forward-fold": "Sit with legs straight together. Hinge at the hips and reach toward your feet, keeping your back long instead of rounding.",
+  "b-ham-stand": "Place one heel forward with toes up and the knee straight. Hinge at the hips with a flat back until you feel the back of the thigh.",
+  "b-ham-lying": "Lie on your back and loop a strap or towel around one foot. Raise that leg as straight as is comfortable while the other rests on the floor.",
+  "b-quad": "Stand tall and hold a wall for balance. Pull one heel toward your glutes, keeping knees together and hips pressed forward.",
+  "b-calf": "Hands on a wall, one foot stepped back. Keep the back leg straight and heel down, and bend the front knee to lean in.",
+  "b-down-dog": "From hands and knees, lift your hips up and back into an upside-down V. Press the floor away and let your heels sink toward the ground.",
+  "b-worlds-greatest": "Step into a deep lunge with both hands inside the front foot. Rotate and reach the arm on the front-leg side up toward the ceiling.",
+  "b-roll-feet": "Stand and set a ball under the arch of one foot. Roll slowly from heel to toes, pressing down as much as is comfortable.",
+  "b-roll-calf": "Sit with the roller under one calf and hands behind you. Lift your hips and roll from ankle to just below the knee. Stack the other leg on top for more pressure.",
+  "b-roll-outer-calf": "Set up as for the calf roll, then turn the leg so the roller sits on the outside of the lower leg. Roll slowly from ankle to knee.",
+  "b-roll-hamstring": "Sit with the roller under one thigh and hands behind you. Lift your hips and roll from just above the knee to the base of the glute.",
+  "b-smash-hamstring": "Sit with a ball under one hamstring and hands behind you. Lean into it and slowly bend and straighten the knee, then shift the ball to a new spot.",
+  "b-roll-quad": "Lie face down on your forearms with the roller under one thigh. Brace your core and roll from just above the knee to the hip.",
+  "b-roll-adductor": "Lie face down and bend one knee out to the side over the roller. Roll in short strokes from the knee toward the groin.",
+  "b-roll-outer-thigh": "Lie on your side with the roller under the outer thigh and the top foot planted in front for support. Roll slowly between hip and knee.",
+  "b-roll-glute": "Sit on the roller and cross one ankle over the opposite knee. Lean toward the crossed-leg side and roll slowly over that glute.",
+  "b-roll-low-back": "Lie on your side with the roller between your ribs and hip. Roll gently in a small range, keeping the roller off your spine.",
+  "b-roll-lats": "Lie on your side with the bottom arm overhead and the roller just below the armpit. Roll down along the side of your back to the bottom of your ribs.",
+  "b-roll-upper-back": "Lie back with the roller under your shoulder blades, hands behind your head and hips lifted. Roll between mid-back and the top of the shoulders, staying above the low back.",
+  "b-roll-t-ext": "Rest the roller across your upper back with hips on the floor and hands supporting your head. Gently arch back over it, then shift the roller up an inch and repeat.",
+  "b-smash-pec": "Face a wall with a ball between it and your chest, just below the collarbone beside the shoulder. Lean in and make small circles, slowly moving that arm.",
+  "b-smash-bicep": "Rest the front of your upper arm on a ball against the floor or a table. Press down and roll from elbow to shoulder, turning your palm up and down.",
+  "b-smash-tricep": "Lie on your side with the arm overhead and a ball under the back of the upper arm. Roll slowly from the elbow toward the armpit.",
+  "b-smash-shoulder": "Lie on your back with a ball under the back of one shoulder blade. Press into it and slowly move that arm up and across your body."
 };
 /* ---------- State ---------- */
 const BIKRAM_CF_ID = "r-bikram-crossfit";
 const BIKRAM_CF = ["b-malasana","b-low-lunge","b-fold-shoulder","b-pigeon","b-supine-twist","b-puppy","b-standing-bow"];
+const RECOVERY_ID = "r-recovery";
+const RECOVERY = ["b-roll-feet","b-roll-calf","b-roll-outer-calf","b-roll-hamstring","b-smash-hamstring","b-roll-quad","b-roll-adductor","b-roll-outer-thigh","b-roll-glute",
+  "b-roll-low-back","b-roll-lats","b-roll-upper-back","b-roll-t-ext","b-smash-pec","b-smash-bicep","b-smash-tricep","b-smash-shoulder"];
+function recoveryRoutine(){ return { id:RECOVERY_ID, name:"Recovery", prep:5, manual:false, items: RECOVERY.map(ex => ({uid:uid(), ex, dur:null})) }; }
 function bikramRoutine(){ return { id:BIKRAM_CF_ID, name:"Bikram + CrossFit Mobility", prep:5, manual:false, items: BIKRAM_CF.map(ex => ({uid:uid(), ex, dur:null})) }; }
 function builtinExercises(){ return BUILTINS.map(([id,name,sides]) => ({id, name, sides, dur:60, builtin:true, notes:NOTES[id] || ""})); }
 function defaultState(){
   return {
-    v:4, updatedAt:0,
+    v:6, updatedAt:0,
     settings:{ sound:true, switchSec:5, silentBeep:true },
     exercises: builtinExercises(),
-    routines:[{ id:uid(), name:"Daily Full Body", prep:5, items: STARTER_ROUTINE.map(ex => ({uid:uid(), ex, dur:null})) }, bikramRoutine()]
+    routines:[{ id:uid(), name:"Daily Full Body", prep:5, items: STARTER_ROUTINE.map(ex => ({uid:uid(), ex, dur:null})) }, bikramRoutine(), recoveryRoutine()]
   };
 }
 // v2: default pause between stretches went from 10s to 5s
 // v3: six new starter stretches and the Bikram + CrossFit Mobility routine
 // v4: starter names lose their parenthesized part; how-to notes added
+// v5: foam roller and ball exercises, the Recovery routine, notes for every starter stretch
+// v6: Hamstring Smash, added to Recovery after Hamstring Roll
 function migrate(s){
   if (!s) return false;
   const v = s.v || 1;
-  if (v >= 4) return false;
+  if (v >= 6) return false;
   if (v < 2) s.routines.forEach(r => { if (r.prep === 10) r.prep = 5; });
   if (v < 3) {
     const have = new Set(s.exercises.map(e => e.id));
     builtinExercises().forEach(b => { if (!have.has(b.id)) s.exercises.push(b); });
     if (!s.routines.some(r => r.id === BIKRAM_CF_ID)) s.routines.push(bikramRoutine());
+  }
+  if (v < 5) {
+    const have = new Set(s.exercises.map(e => e.id));
+    builtinExercises().forEach(b => { if (!have.has(b.id)) s.exercises.push(b); });
+    if (!s.routines.some(r => r.id === RECOVERY_ID)) s.routines.push(recoveryRoutine());
   }
   const starter = Object.fromEntries(builtinExercises().map(b => [b.id, b]));
   s.exercises.forEach(e => {
@@ -458,7 +549,15 @@ function migrate(s){
     if (/\(.*\)/.test(e.name)) e.name = e.name.replace(/\s*\(.*?\)\s*/g, " ").trim();
     if (!e.notes && b.notes) e.notes = b.notes;
   });
-  s.v = 4;
+  if (v >= 5) {   // Recovery already existed: add the new exercise and slot it in
+    if (!s.exercises.some(e => e.id === "b-smash-hamstring")) s.exercises.push(builtinExercises().find(b => b.id === "b-smash-hamstring"));
+    const rec = s.routines.find(r => r.id === RECOVERY_ID);
+    if (rec && !rec.items.some(it => it.ex === "b-smash-hamstring")) {
+      const at = rec.items.findIndex(it => it.ex === "b-roll-hamstring");
+      rec.items.splice(at >= 0 ? at + 1 : rec.items.length, 0, {uid:uid(), ex:"b-smash-hamstring", dur:null});
+    }
+  }
+  s.v = 6;
   return true;
 }
 function valid(s){ return s && Array.isArray(s.exercises) && Array.isArray(s.routines) && s.settings; }

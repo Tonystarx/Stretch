@@ -4,8 +4,8 @@ A stretch routine timer built for iPhone. Build routines from an exercise bank, 
 
 ## Features
 
-- Several named routines, built from a bank of 34 starter stretches, each with a line figure. You can add your own.
-- Comes with two starter routines: Daily Full Body, and Bikram + CrossFit Mobility.
+- Several named routines, built from a bank of 51 starter exercises (stretches plus foam roller and ball work), each with a line figure and a short how-to note. You can add your own.
+- Comes with three starter routines: Daily Full Body, Bikram + CrossFit Mobility, and Recovery (foam rolling).
 - Each stretch is either one-sided or left/right. Left/right stretches run the full time on each side, with a 5-second switch countdown between sides.
 - Times of 1, 2 or 3 minutes per stretch (default 1).
 - Between stretches, choose Timed (a 5-second "Starts in" countdown, adjustable) or Manual (the next stretch waits until you tap play or forward).
