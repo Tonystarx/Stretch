@@ -188,6 +188,10 @@ svg{display:block}
 .thumb .fig{width:100%;height:100%}
 .p-fig{height:clamp(84px,18vh,150px);aspect-ratio:1;color:var(--pc);filter:drop-shadow(0 0 6px color-mix(in srgb,var(--pc) 45%,transparent))}
 .p-fig .fig{width:100%;height:100%}
+.p-notes{margin:-2px 0 0;max-width:36ch;color:var(--muted);font-size:15px;line-height:1.38;text-wrap:pretty}
+.player.has-notes .p-fig{height:clamp(60px,12vh,120px)}
+.player.has-notes .ring{width:min(62vw,260px,27vh)}
+.player.has-notes .ring .time{font-size:min(17vw,72px,9.5vh)}
 .p-fig.mirror .fig{transform:scaleX(-1)}
 .sel-wrap{display:flex;flex-direction:column;gap:8px}
 .sel-wrap:empty{display:none}
@@ -206,6 +210,7 @@ svg{display:block}
 .bank-name{font-weight:500;overflow-wrap:anywhere}
 .bank-meta{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:13px;margin-top:2px}
 .field{display:flex;flex-direction:column;gap:6px}
+.notes-input{min-height:88px;padding:10px 14px;resize:vertical;line-height:1.4}
 .field label,.field .lbl{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .text-input{min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0 14px;width:100%}
 .text-input:focus{outline:2px solid var(--accent);outline-offset:-1px}
@@ -318,8 +323,8 @@ const BUILTINS = [
   ["b-calf","Wall Calf Stretch",2],
   ["b-down-dog","Downward Dog",1],
   ["b-worlds-greatest","World's Greatest Stretch",2],
-  ["b-malasana","Deep Squat (Malasana)",1],
-  ["b-low-lunge","Low Lunge (Anjaneyasana)",2],
+  ["b-malasana","Deep Squat",1],
+  ["b-low-lunge","Low Lunge",2],
   ["b-fold-shoulder","Forward Fold with Shoulder Opener",1],
   ["b-puppy","Puppy Pose",1],
   ["b-standing-bow","Standing Bow Pulling Pose",2],
@@ -411,14 +416,24 @@ function figureSVG(exId, cls){
   return `<svg class="fig ${cls||""} ${p.generic ? "generic" : ""}" viewBox="0 0 100 100" aria-hidden="true">${parts.join("")}</svg>`;
 }
 
+/* How-to notes shown on the timer screen; editable per exercise */
+const NOTES = {
+  "b-malasana": "Feet slightly wider than hip-width, sink hips below knees. Press elbows against inner knees to open the groin.",
+  "b-low-lunge": "Back knee down, sink hips forward, arms overhead. Let gravity pull you deeper into the hip flexor stretch.",
+  "b-fold-shoulder": "Clasp hands behind your back, fold forward at the hips. Let arms fall overhead toward the floor under their own weight.",
+  "b-pigeon": "Front shin as parallel to the mat edge as possible. Stay upright or fold forward over the front leg for a deeper stretch.",
+  "b-supine-twist": "On your back, draw one knee across your body and extend the same-side arm out. Keep both shoulder blades on the floor.",
+  "b-puppy": "Knees under hips, walk hands forward, melt chest toward the floor. Keep hips stacked over knees.",
+  "b-standing-bow": "Standing on one leg, grab the opposite foot behind you. Kick into your hand and hinge forward."
+};
 /* ---------- State ---------- */
 const BIKRAM_CF_ID = "r-bikram-crossfit";
 const BIKRAM_CF = ["b-malasana","b-low-lunge","b-fold-shoulder","b-pigeon","b-supine-twist","b-puppy","b-standing-bow"];
 function bikramRoutine(){ return { id:BIKRAM_CF_ID, name:"Bikram + CrossFit Mobility", prep:5, manual:false, items: BIKRAM_CF.map(ex => ({uid:uid(), ex, dur:null})) }; }
-function builtinExercises(){ return BUILTINS.map(([id,name,sides]) => ({id, name, sides, dur:60, builtin:true})); }
+function builtinExercises(){ return BUILTINS.map(([id,name,sides]) => ({id, name, sides, dur:60, builtin:true, notes:NOTES[id] || ""})); }
 function defaultState(){
   return {
-    v:3, updatedAt:0,
+    v:4, updatedAt:0,
     settings:{ sound:true, switchSec:5, silentBeep:true },
     exercises: builtinExercises(),
     routines:[{ id:uid(), name:"Daily Full Body", prep:5, items: STARTER_ROUTINE.map(ex => ({uid:uid(), ex, dur:null})) }, bikramRoutine()]
@@ -426,15 +441,24 @@ function defaultState(){
 }
 // v2: default pause between stretches went from 10s to 5s
 // v3: six new starter stretches and the Bikram + CrossFit Mobility routine
+// v4: starter names lose their parenthesized part; how-to notes added
 function migrate(s){
   if (!s) return false;
   const v = s.v || 1;
-  if (v >= 3) return false;
+  if (v >= 4) return false;
   if (v < 2) s.routines.forEach(r => { if (r.prep === 10) r.prep = 5; });
-  const have = new Set(s.exercises.map(e => e.id));
-  builtinExercises().forEach(b => { if (!have.has(b.id)) s.exercises.push(b); });
-  if (!s.routines.some(r => r.id === BIKRAM_CF_ID)) s.routines.push(bikramRoutine());
-  s.v = 3;
+  if (v < 3) {
+    const have = new Set(s.exercises.map(e => e.id));
+    builtinExercises().forEach(b => { if (!have.has(b.id)) s.exercises.push(b); });
+    if (!s.routines.some(r => r.id === BIKRAM_CF_ID)) s.routines.push(bikramRoutine());
+  }
+  const starter = Object.fromEntries(builtinExercises().map(b => [b.id, b]));
+  s.exercises.forEach(e => {
+    const b = starter[e.id]; if (!b) return;
+    if (/\(.*\)/.test(e.name)) e.name = e.name.replace(/\s*\(.*?\)\s*/g, " ").trim();
+    if (!e.notes && b.notes) e.notes = b.notes;
+  });
+  s.v = 4;
   return true;
 }
 function valid(s){ return s && Array.isArray(s.exercises) && Array.isArray(s.routines) && s.settings; }
@@ -504,9 +528,6 @@ function save(){
 }
 
 /* ---------- Backup and restore (data lives on this device) ---------- */
-function storageNote(){
-  return `<p class="footnote" id="sync-note"><span class="dot ok"></span>Saved on this device. Back up anytime in Settings.</p>`;
-}
 function backupName(){ return `stretch-timer-backup-${new Date().toISOString().slice(0,10)}.json`; }
 async function exportBackup(){
   const data = JSON.stringify({app:"stretch-timer", exportedAt:new Date().toISOString(), state:S}, null, 2);
@@ -630,7 +651,6 @@ function homePage(){
       ${cards}
       <button class="ghost-card" data-a="new-routine">${I.plus}<span>New routine</span></button>
     </div>
-    ${storageNote()}
   </div>`;
 }
 
@@ -738,6 +758,8 @@ function renderSheet(){
          </div>
          <p class="hint" id="ex-sides-hint">${sidesHint(SH.sides, SH.dur)}</p></div>
        <div class="field"><span class="lbl">Default time${SH.sides===2?" per side":""}</span>${durEditor(SH.dur)}</div>
+       <div class="field"><label for="ex-notes">How to do it (optional)</label>
+         <textarea class="text-input notes-input" id="ex-notes" rows="3" maxlength="300" placeholder="Short form cues shown on the timer screen">${esc(SH.notes || "")}</textarea></div>
        ${SH.id ? `<button class="danger-link" data-a="ex-delete">Delete exercise</button>` : ""}`,
       `<button class="btn secondary" data-a="ex-cancel">Cancel</button><button class="btn primary" data-a="ex-save">Save</button>`);
   }
@@ -958,10 +980,9 @@ function renderPlayer(){
   if (ph.side === "L" && ph.t !== "switch") next = "Then the right side";
   else if (ph.n + 1 < P.items.length) { const nx = P.items[ph.n+1]; next = `Up next: ${nx.name}${nx.sides===2?" (L / R)":""}`; }
   else next = "Last stretch";
-  if (ph.hold) next = "Tap play when you're in position";
   const glowSide = ph.t === "switch" ? "R" : ph.side;
   const glow = glowSide ? `<div class="side-glow ${ph.t === "work" ? "active" : "upcoming"}" data-side="${glowSide}" aria-hidden="true"></div>` : "";
-  root.innerHTML = `<div class="player" style="--pc:${phaseColor(ph)}">${glow}<div class="pinner">
+  root.innerHTML = `<div class="player ${ph.ex.notes ? "has-notes" : ""}" style="--pc:${phaseColor(ph)}">${glow}<div class="pinner">
     <div class="p-top">
       <button class="icon-btn" data-a="player-end" aria-label="End session">${I.close}</button>
       <span class="p-count num">${ph.n+1} of ${P.count}</span>
@@ -971,6 +992,7 @@ function renderPlayer(){
     <div class="p-main">
       <div class="p-phase num ${ph.t === "prep" ? "big" : ""}" id="p-phase">${phaseLabel}</div>
       <h2 class="p-name">${esc(ph.ex.name)}</h2>
+      ${ph.ex.notes ? `<p class="p-notes">${esc(ph.ex.notes)}</p>` : ""}
       <div class="p-fig ${glowSide === "R" ? "mirror" : ""}">${figureSVG(ph.ex.id)}</div>
       <div class="ring" role="timer" aria-live="off">
         <svg viewBox="0 0 120 120">
@@ -1104,8 +1126,8 @@ const actions = {
     commitEdit(r); closeSheet(); render();
     setTimeout(() => window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"}), 50);
   },
-  "ex-new": () => { SH = {kind:"exform", id:null, name:SH.q || "", sides:2, dur:60, back:SH}; renderSheet(); setTimeout(() => $("#ex-name") && $("#ex-name").focus(), 250); },
-  "ex-edit": el => { const e = getEx(el.dataset.id); SH = {kind:"exform", id:e.id, name:e.name, sides:e.sides, dur:e.dur, back:SH}; renderSheet(); },
+  "ex-new": () => { SH = {kind:"exform", id:null, name:SH.q || "", sides:2, dur:60, notes:"", back:SH}; renderSheet(); setTimeout(() => $("#ex-name") && $("#ex-name").focus(), 250); },
+  "ex-edit": el => { const e = getEx(el.dataset.id); SH = {kind:"exform", id:e.id, name:e.name, sides:e.sides, dur:e.dur, notes:e.notes || "", back:SH}; renderSheet(); },
   "ex-sides": el => {
     SH.sides = +el.dataset.v;
     document.querySelectorAll('[data-a="ex-sides"]').forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === SH.sides)));
@@ -1116,8 +1138,9 @@ const actions = {
     const name = ($("#ex-name").value || "").trim();
     if (!name) { const i = $("#ex-name"); i.focus(); i.placeholder = "Enter a name to save"; return; }
     let newId = null;
-    if (SH.id) { const e = getEx(SH.id); e.name = name; e.sides = SH.sides; e.dur = SH.dur; }
-    else { newId = "c-" + uid(); S.exercises.push({id:newId, name, sides:SH.sides, dur:SH.dur, builtin:false}); }
+    const notes = (($("#ex-notes") || {}).value || "").trim();
+    if (SH.id) { const e = getEx(SH.id); e.name = name; e.sides = SH.sides; e.dur = SH.dur; e.notes = notes; }
+    else { newId = "c-" + uid(); S.exercises.push({id:newId, name, sides:SH.sides, dur:SH.dur, builtin:false, notes}); }
     save();
     const back = SH.back;
     if (back && back.mode === "add" && newId) back.sel.add(newId);
@@ -1159,6 +1182,7 @@ const actions = {
 };
 function renderSheetKeepName(){
   const inp = $("#ex-name"); if (inp) SH.name = inp.value;
+  const nt = $("#ex-notes"); if (nt) SH.notes = nt.value;
   renderSheet();
 }
 function backToBank(){
