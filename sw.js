@@ -1,6 +1,6 @@
 // Stretch Timer service worker: lets the app open without a connection.
 // When you change index.html, bump CACHE so phones drop the old copy promptly.
-const CACHE = "stretch-timer-v8";
+const CACHE = "stretch-timer-v9";
 const SHELL = [
   "./",
   "./index.html",
