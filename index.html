@@ -251,7 +251,11 @@ svg{display:block}
 .p-left{color:var(--muted);font-size:15px;min-width:44px;text-align:right}
 .pbar{height:4px;border-radius:2px;background:var(--soft);overflow:hidden;margin-top:6px}
 .pbar i{display:block;height:100%;background:var(--pc);transition:width .3s linear}
-.p-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;min-height:0;padding:12px 0}
+.p-stage{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;min-height:0;padding:12px 0 0}
+.p-info,.p-timer{display:contents}                 /* portrait: one column, original order */
+.p-phase{order:1;margin-top:auto}.p-name{order:2}.p-notes{order:3}.p-fig{order:4}.ring{order:5}.p-next{order:6}.paused-tag{order:7}
+.p-ctrl{order:8;margin-top:auto}
+
 .p-phase{min-height:40px;display:flex;align-items:center;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--pc)}
 .p-phase.big{font-family:var(--display);font-size:32px;letter-spacing:.05em;text-shadow:0 0 18px color-mix(in srgb,var(--pc) 55%,transparent)}
 .p-name{font-family:var(--display);font-weight:700;font-size:34px;line-height:1.08;margin:0;text-wrap:balance;max-width:20ch}
@@ -263,7 +267,7 @@ svg{display:block}
 .ring .prog{stroke:var(--pc);transition:stroke-dashoffset .1s linear;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--pc) 70%,transparent))}
 .ring .time{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:min(20vw,84px,12vh);letter-spacing:-.01em}
 .p-next{color:var(--muted);font-size:15px;min-height:21px}
-.p-ctrl{display:flex;align-items:center;justify-content:center;gap:28px;padding-top:8px}
+.p-ctrl{display:flex;align-items:center;justify-content:center;gap:28px;padding-top:8px;flex:none}
 .c-btn{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--ink)}
 .c-btn.main{width:84px;height:84px;background:var(--pc);color:var(--bg);box-shadow:0 0 28px color-mix(in srgb,var(--pc) 45%,transparent)}
 .c-btn:active{filter:brightness(.9)}
@@ -311,7 +315,31 @@ svg{display:block}
   background:var(--raised);color:var(--ink);padding:10px 16px;border-radius:12px;font-weight:600;font-size:15px;pointer-events:none;transition:opacity .2s,transform .2s;
   box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:calc(100% - 32px);text-align:center}
 #flash.show{opacity:1;transform:translate(-50%,0)}
-@media (prefers-reduced-motion: reduce){
+@media (orientation: landscape){
+  /* landscape: timer and controls on the left, name, notes and figure on the right */
+  .p-stage{flex-direction:row;align-items:center;justify-content:center;gap:clamp(16px,4vw,48px);padding:6px 0 0}
+  .p-info,.p-timer{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;flex:1 1 50%;max-width:440px;height:100%}
+  .player .pinner{max-width:920px}
+  .p-timer{order:1;gap:8px}
+  .p-info{order:2;gap:6px}
+  .p-phase,.p-ctrl{margin-top:0}
+  .p-phase{min-height:30px}
+  .p-phase.big{font-size:26px}
+  .p-name{font-size:clamp(22px,4.2vh + 8px,32px);max-width:24ch}
+  .p-notes{font-size:14px;max-width:42ch}
+  .player .p-fig,.player.has-notes .p-fig{height:clamp(48px,24vh,140px)}
+  .player .ring,.player.has-notes .ring{width:min(36vw,58vh,300px);margin:0}
+  .player .ring .time,.player.has-notes .ring .time{font-size:min(9vw,15vh,84px)}
+  .p-ctrl{gap:22px;padding-top:4px}
+  .c-btn{width:52px;height:52px}
+  .c-btn.main{width:68px;height:68px}
+  .done .badge{width:64px;height:64px}
+  .done h2{font-size:30px;margin-top:0}
+}
+@media (orientation: landscape) and (max-height: 430px){
+  .done .badge{display:none}
+  .confirm-box{margin-top:6px;padding:10px 14px;gap:6px}
+}@media (prefers-reduced-motion: reduce){
   *{animation:none!important;transition:none!important}
 }
 </style>
@@ -1206,11 +1234,15 @@ function renderPlayer(){
       <span class="p-left num" id="p-left"></span>
     </div>
     <div class="pbar"><i id="p-bar"></i></div>
-    <div class="p-main">
+    <div class="p-stage">
+     <div class="p-info">
       <div class="p-phase num ${ph.t === "prep" ? "big" : ""}" id="p-phase">${phaseLabel}</div>
       <h2 class="p-name">${esc(ph.ex.name)}</h2>
       ${ph.ex.notes ? `<p class="p-notes">${esc(ph.ex.notes)}</p>` : ""}
       <div class="p-fig ${glowSide === "R" ? "mirror" : ""}">${figureSVG(ph.ex.id)}</div>
+      <div class="p-next">${esc(next)}</div>
+     </div>
+     <div class="p-timer">
       <div class="ring" role="timer" aria-live="off">
         <svg viewBox="0 0 120 120">
           <defs><linearGradient id="logo-grad" x1="0" y1="1" x2="1" y2="0">
@@ -1220,13 +1252,13 @@ function renderPlayer(){
           <circle class="prog" id="p-ring" cx="60" cy="60" r="54" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="${RC}" stroke-dashoffset="0" ${ph.side ? "" : 'style="stroke:url(#logo-grad)"'}/></svg>
         <div class="time num" id="p-time">${mmss(ph.secs)}</div>
       </div>
-      <div class="p-next">${esc(next)}</div>
       <div class="paused-tag" id="p-paused" ${P.paused && !ph.hold ? "" : "hidden"}>Paused</div>
-    </div>
-    <div class="p-ctrl">
-      <button class="c-btn" data-a="p-prev" aria-label="Previous side">${I.prev}</button>
-      <button class="c-btn main" data-a="p-toggle" id="p-toggle" aria-label="${ph.hold ? "Start stretch" : P.paused ? "Resume" : "Pause"}">${ph.hold || P.paused ? I.playL : I.pauseL}</button>
-      <button class="c-btn" data-a="p-next" aria-label="Next side">${I.next}</button>
+      <div class="p-ctrl">
+        <button class="c-btn" data-a="p-prev" aria-label="Previous side">${I.prev}</button>
+        <button class="c-btn main" data-a="p-toggle" id="p-toggle" aria-label="${ph.hold ? "Start stretch" : P.paused ? "Resume" : "Pause"}">${ph.hold || P.paused ? I.playL : I.pauseL}</button>
+        <button class="c-btn" data-a="p-next" aria-label="Next side">${I.next}</button>
+      </div>
+     </div>
     </div>
   </div></div>`;
   updateClock(ph, ph.secs - elapsed());
